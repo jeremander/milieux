@@ -1,0 +1,41 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+default_install_hook_types: [commit-msg, pre-commit, pre-push]
+default_stages: [commit]
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.6.0
+  hooks:
+    - id: check-added-large-files
+      args: ['--maxkb=5000']
+    - id: end-of-file-fixer
+      exclude: fancy_dataclass/docs/.*
+    - id: check-case-conflict
+    - id: detect-private-key
+    - id: check-docstring-first
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: v0.4.2
+  hooks:
+    - id: ruff
+- repo: https://github.com/netromdk/vermin
+  rev: v1.6.0
+  hooks:
+    - id: vermin-all
+      args: ['.']
+- repo: https://github.com/commitizen-tools/commitizen
+  rev: v3.25.0
+  hooks:
+    - id: commitizen
+      stages: [commit-msg]
+- repo: https://github.com/jeremander/gadzooks
+  rev: v0.2.9
+  hooks:
+    - id: loc-summarize
+      args: ['fancy_dataclass/*.py']
+      pass_filenames: false
+      verbose: true
+    - id: check-version
+      args: []
+      pass_filenames: false
+      verbose: true
+      stages: [commit]

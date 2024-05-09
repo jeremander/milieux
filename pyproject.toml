@@ -1,0 +1,120 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "milieux"
+dynamic = ["version"]
+description = "Tool to manage Python packages and installations."
+# readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+keywords = ["virtualenv"]
+authors = [
+  { name = "Jeremy Silver", email = "jeremys@nessiness.com" }
+]
+classifiers = [
+  "Programming Language :: Python"
+]
+dependencies = [
+  "typing_extensions"
+]
+
+[project.urls]
+Documentation = "https://github.com/jeremander/milieux#readme"
+Issues = "https://github.com/jeremander/milieux/issues"
+Source = "https://github.com/jeremander/milieux"
+
+[tool.hatch.build.targets.sdist]
+exclude = [".venv", "TODO.md"]
+
+[tool.hatch.version]
+path = "milieux/__init__.py"
+
+[tool.hatch.envs.lint]
+dependencies = [
+  "mypy>=1.0",
+  "py-gadzooks>=0.2.9",
+  "pytest",
+  "ruff>=0.3",
+  "vermin>=1.5",
+]
+
+[tool.hatch.envs.lint.scripts]
+# linting
+run-ruff = "ruff check"
+# ensure compatibility with Py3.9 and higher
+run-vermin = "vermin {args:.}"
+# type-checking
+run-mypy = "mypy --install-types --non-interactive {args:milieux tests}"
+# print info about lines of code
+run-loc-summarize = "gadzooks loc-summarize milieux"
+# print out formatter diffs
+run-format = "gadzooks check-format milieux --formatter yapf --ignore-patterns '\\s*'"
+all = ["run-ruff", "run-vermin", "run-mypy", "run-loc-summarize"]
+
+[tool.hatch.envs.test]
+dependencies = [
+    "pytest",
+    "pytest-cov",
+]
+
+[tool.hatch.envs.test.scripts]
+test = "pytest {args:tests}"
+test-debug = "pytest --pdb {args:tests}"
+cov-report = ["- coverage combine", "coverage report", "coverage html"]
+cov = ["test", "cov-report"]
+
+[[tool.hatch.envs.test.matrix]]
+python = ["3.9", "3.10", "3.11", "3.12"]
+
+[tool.hatch.envs.badge]
+dependencies = [
+  "coverage",
+  "genbadge[tests,coverage]"
+]
+
+[tool.hatch.envs.badge.scripts]
+badge-cov = ["coverage xml", "genbadge coverage -i coverage.xml"]
+badges = ["badge-cov"]
+
+[tool.hatch.publish.index]
+disable = true
+
+[tool.coverage.run]
+source_pkgs = ["milieux", "tests"]
+branch = true
+parallel = true
+omit = ["venv/*"]
+
+[tool.coverage.report]
+skip_covered = true
+show_missing = true
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.commitizen]
+tag_format = "v$major.$minor.$patch"
+
+[tool.mypy]
+exclude = ["tmp.*"]
+warn_unused_configs = true
+strict = true
+
+[tool.pytest.ini_options]
+addopts = "--verbose --cov=milieux"
+
+[tool.yapf]
+# NOTE: we'd like to disable vertical whitespace adjustment,
+# but there appears to be no way to do that
+based_on_style = "pep8"
+blank_lines_between_top_level_imports_and_variables = 2
+coalesce_brackets = true
+column_limit = 10000
+dedent_closing_brackets = true
+space_between_ending_comma_and_closing_bracket = false
+spaces_around_power_operator = true
+split_all_top_level_comma_separated_values = true
