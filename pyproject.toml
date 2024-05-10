@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "milieux"
 dynamic = ["version"]
-description = "Tool to manage Python packages and installations."
+description = "Tool to assist in developing, building, and installing Python packages."
 # readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
@@ -17,7 +17,9 @@ classifiers = [
   "Programming Language :: Python"
 ]
 dependencies = [
-  "typing_extensions"
+  "fancy_dataclass >= 0.4.5",
+  "loguru",
+  "typing_extensions",
 ]
 
 [project.urls]
@@ -35,7 +37,6 @@ path = "milieux/__init__.py"
 dependencies = [
   "mypy>=1.0",
   "py-gadzooks>=0.2.9",
-  "pytest",
   "ruff>=0.3",
   "vermin>=1.5",
 ]

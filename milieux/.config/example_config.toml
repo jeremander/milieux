@@ -1,0 +1,12 @@
+# base directory (by default, everything will be installed here)
+# base_dir = "/path/to/base/milieu/dir"
+
+# directory for virtual environments
+# env_dir = "envs"
+
+# directory for TCL module files
+# module_dir = "modules"
+
+# [pip]
+# URL for PyPI index
+# index_url = "https://my-pypi-mirror.org"
