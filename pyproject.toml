@@ -22,6 +22,9 @@ dependencies = [
   "typing_extensions",
 ]
 
+[project.scripts]
+milieux = "milieux.cli.main:MilieuxCLI.main"
+
 [project.urls]
 Documentation = "https://github.com/jeremander/milieux#readme"
 Issues = "https://github.com/jeremander/milieux/issues"
