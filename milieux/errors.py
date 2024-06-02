@@ -9,6 +9,9 @@ class EnvironmentExistsError(MilieuxError):
 
 class NoSuchEnvironmentError(MilieuxError):
     """Error for when an environment does not exist."""
+    def __init__(self, env_name: str) -> None:
+        self.env_name = env_name
+        super().__init__(f'No environment named {env_name!r}')
 
 class NoPackagesError(MilieuxError):
     """Error for when no packages are provided."""

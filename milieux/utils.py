@@ -1,8 +1,21 @@
+from __future__ import annotations
+
 from pathlib import Path
+import shlex
+import subprocess
+from typing import Any
+
+from loguru import logger
 
 
-# def run_command(cmd: list[Any], **kwargs: Any) -> subprocess.CompletedProcess:
-#     """Runs a command (provided as a list) via subprocess."""
+def run_command(cmd: list[Any], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+    """Runs a command (provided as a list) via subprocess.
+    Passes any kwargs to subprocess.run."""
+    cmd = [str(token) for token in cmd]
+    logger.info(shlex.join(cmd))
+    kwargs = {'text': True, **kwargs}  # use text mode by default
+    return subprocess.run(cmd, **kwargs)
+
 
 def resolve_path(path: str, base_dir: Path) -> Path:
     """Attempts to resolve a path to an absolute path.

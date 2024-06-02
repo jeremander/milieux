@@ -3,12 +3,14 @@
 from dataclasses import dataclass, field
 import sys
 import traceback
+from typing import Union
 
 from fancy_dataclass import CLIDataclass
 from loguru import logger
 
 from milieux import PKG_NAME
 from milieux.cli.config import ConfigCmd
+from milieux.cli.env import EnvCmd
 from milieux.config import Config, user_default_config_path
 from milieux.errors import MilieuxError
 
@@ -17,7 +19,10 @@ from milieux.errors import MilieuxError
 class MilieuxCLI(CLIDataclass):
     """Tool to assist in developing, building, and installing Python packages."""
 
-    subcommand: ConfigCmd = field(metadata={'subcommand': True})
+    subcommand: Union[
+        ConfigCmd,
+        EnvCmd
+     ] = field(metadata={'subcommand': True})
 
     def run(self) -> None:
         """Top-level CLI app for milieux."""

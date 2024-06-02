@@ -31,6 +31,7 @@ lint.ignore = [
     "C901",  # function is too complex
     "D100",  # module-level docstring
     "D105",  # magic method docstring
+    "D107",  # __init__ docstring
     "D203",  # blank line before class docstring
     # "D204",  # blank line after class docstring
     "D205",  # blank line between summary and description

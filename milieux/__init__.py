@@ -6,6 +6,9 @@ from loguru import logger
 
 __version__ = '0.1.0'
 
+# name of the main executable
+PROG = 'milieux'
+
 # path to package root
 PKG_DIR = Path(__file__).parent
 PKG_NAME = PKG_DIR.name

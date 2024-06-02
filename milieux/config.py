@@ -50,10 +50,10 @@ class Config(ConfigDataclass, TOMLDataclass):  # type: ignore[misc]
         str,
         Doc('directory for virtual environments')
     ] = 'envs'
-    module_dir: Annotated[
+    env_file_dir: Annotated[
         str,
-        Doc('directory for module files')
-    ] = 'modules'
+        Doc('directory for environment files')
+    ] = 'env_files'
     pip: PipConfig = field(default_factory=PipConfig)
 
     @property
@@ -67,6 +67,6 @@ class Config(ConfigDataclass, TOMLDataclass):  # type: ignore[misc]
         return resolve_path(self.env_dir, Path(self.base_dir))
 
     @property
-    def module_dir_path(self) -> Path:
-        """Gets the path to the TCL module directory."""
-        return resolve_path(self.module_dir, Path(self.base_dir))
+    def env_file_dir_path(self) -> Path:
+        """Gets the path to the environment file directory."""
+        return resolve_path(self.env_file_dir, Path(self.base_dir))
