@@ -19,7 +19,7 @@ classifiers = [
 dependencies = [
   "fancy_dataclass >= 0.4.6",
   "loguru",
-  "typing_extensions",
+  "typing_extensions >= 4.10",
 ]
 
 [project.scripts]
@@ -41,6 +41,7 @@ dependencies = [
   "mypy>=1.0",
   "py-gadzooks>=0.2.9",
   "ruff>=0.3",
+  "pytest-mypy",
   "vermin>=1.5",
 ]
 
@@ -107,6 +108,11 @@ tag_format = "v$major.$minor.$patch"
 exclude = ["tmp.*"]
 warn_unused_configs = true
 strict = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+strict = false
+disable_error_code = ["attr-defined", "no-untyped-def"]
 
 [tool.pytest.ini_options]
 addopts = "--verbose --cov=milieux"

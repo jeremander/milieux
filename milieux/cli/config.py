@@ -36,10 +36,9 @@ class ConfigNew(CLIDataclass, command_name='new'):
             # TODO: prompt for creation
             raise UserInputError(f'{base_dir} is not a valid directory')
         kwargs: dict[str, Any] = {'base_dir': base_dir}
-        for (name, descr) in [('env_dir', 'virtual environments'), ('env_file_dir', 'environment files')]:
-            default_dir = Config.__dataclass_fields__[name].default
-            assert isinstance(default_dir, str)
-            kwargs[name] = prompt_for_dir(f'Directory for {descr}', default_dir)
+        default_env_dir = Config.__dataclass_fields__['env_dir'].default
+        assert isinstance(default_env_dir, str)
+        kwargs['env_dir'] = prompt_for_dir('Directory for env_dir', default_env_dir)
         # TODO: access ~/.pip/pip.conf to retrieve index_url if it exists
         index_url = input('PyPI index URL (optional): ').strip() or None
         kwargs['pip'] = PipConfig(index_url=index_url)

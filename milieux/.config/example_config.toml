@@ -1,11 +1,8 @@
 # base directory (by default, everything will be installed here)
-# base_dir = "/path/to/base/milieu/dir"
+# base_dir = "/path/to/base/milieux/dir"
 
 # directory for virtual environments
 # env_dir = "envs"
-
-# directory for TCL module files
-# module_dir = "modules"
 
 # [pip]
 # URL for PyPI index

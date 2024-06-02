@@ -1,11 +1,13 @@
 from dataclasses import dataclass
 from datetime import datetime
 import json
+import os
+from pathlib import Path
 import shutil
 from typing import Annotated, Optional
 
 from loguru import logger
-from typing_extensions import Doc  # type: ignore[attr-defined]
+from typing_extensions import Doc
 
 from milieux import PROG
 from milieux.config import Config
@@ -23,6 +25,14 @@ class EnvManager:
         if not (path := self.config.env_dir_path).exists():
             logger.info(f'mkdir -p {path}')
             path.mkdir(parents=True)
+
+    def get_env_path(self, name: str) -> Path:
+        """Gets the path to the environment with the given name.
+        If no such environment exists, raises a NoSuchEnvironmentError."""
+        env_path = self.config.env_dir_path / name
+        if not env_path.exists():
+            raise NoSuchEnvironmentError(name)
+        return env_path
 
     def create(self,
         name: Annotated[str, Doc('name of environment')],
@@ -58,19 +68,17 @@ class EnvManager:
         cmd = ['uv', 'pip', 'install']
         if (index_url := self.config.pip.index_url):
             cmd.extend(['--index-url', index_url])
+        # TODO: extra index URLs?
         cmd.extend(packages)
-        # TODO: provide VIRTUAL_ENV env var
-        run_command(cmd)
+        env = {**os.environ, 'VIRTUAL_ENV': str(self.get_env_path(name))}
+        run_command(cmd, env=env)
 
     def remove(self, name: str) -> None:
         """Deletes the environment with the given name."""
-        env_dir = self.config.env_dir_path / name
-        if env_dir.exists():
-            logger.info(f'Deleting {name!r} environment')
-            shutil.rmtree(env_dir)
-            logger.info(f'Deleted {env_dir}')
-        else:
-            raise NoSuchEnvironmentError(name)
+        env_path = self.get_env_path(name)
+        logger.info(f'Deleting {name!r} environment')
+        shutil.rmtree(env_path)
+        logger.info(f'Deleted {env_path}')
 
     def show(self, name: Optional[str] = None) -> None:
         """Shows the existing environments.
@@ -85,10 +93,7 @@ class EnvManager:
             else:
                 print('No environments exist.')
         else:
-            path = self.config.env_dir_path / name
-            if path.exists():
-                created_at = datetime.fromtimestamp(path.stat().st_ctime).isoformat()
-                d = {'name': name, 'path': str(path), 'created_at': created_at}
-                print(json.dumps(d, indent=2))
-            else:
-                raise NoSuchEnvironmentError(name)
+            path = self.get_env_path(name)
+            created_at = datetime.fromtimestamp(path.stat().st_ctime).isoformat()
+            d = {'name': name, 'path': str(path), 'created_at': created_at}
+            print(json.dumps(d, indent=2))

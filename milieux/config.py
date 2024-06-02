@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Annotated, Optional
 
 from fancy_dataclass import ConfigDataclass, TOMLDataclass
-from typing_extensions import Doc  # type: ignore[attr-defined]
+from typing_extensions import Doc
 
 from milieux import PKG_NAME
 from milieux.utils import resolve_path
@@ -50,10 +50,6 @@ class Config(ConfigDataclass, TOMLDataclass):  # type: ignore[misc]
         str,
         Doc('directory for virtual environments')
     ] = 'envs'
-    env_file_dir: Annotated[
-        str,
-        Doc('directory for environment files')
-    ] = 'env_files'
     pip: PipConfig = field(default_factory=PipConfig)
 
     @property
@@ -65,8 +61,3 @@ class Config(ConfigDataclass, TOMLDataclass):  # type: ignore[misc]
     def env_dir_path(self) -> Path:
         """Gets the path to the environment directory."""
         return resolve_path(self.env_dir, Path(self.base_dir))
-
-    @property
-    def env_file_dir_path(self) -> Path:
-        """Gets the path to the environment file directory."""
-        return resolve_path(self.env_file_dir, Path(self.base_dir))
