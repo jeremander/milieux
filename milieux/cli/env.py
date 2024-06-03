@@ -58,11 +58,6 @@ class EnvCreate(EnvSubcommand, command_name='create'):
 
 
 @dataclass
-class EnvFile(EnvSubcommand, command_name='file'):
-    """manage an environment file"""
-
-
-@dataclass
 class EnvInstall(EnvSubcommand, command_name='install'):
     """install packages into an environment"""
     packages: list[str] = _get_packages_field()
@@ -98,7 +93,6 @@ class EnvCmd(CLIDataclass, command_name='env'):
     subcommand: Union[
         EnvActivate,
         EnvCreate,
-        EnvFile,
         EnvInstall,
         EnvRemove,
         EnvShow

@@ -112,7 +112,7 @@ strict = true
 [[tool.mypy.overrides]]
 module = "tests.*"
 strict = false
-disable_error_code = ["attr-defined", "no-untyped-def"]
+disable_error_code = ["attr-defined", "no-untyped-call", "no-untyped-def"]
 
 [tool.pytest.ini_options]
 addopts = "--verbose --cov=milieux"

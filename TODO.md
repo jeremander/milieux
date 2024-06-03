@@ -5,13 +5,6 @@
 ## v0.1.0
 
 - Subcommands
-    - `config`
-        - Config management
-        - Config registry: various pre-made configs stored within `milieux`
-        - `use`: use a pre-installed config
-            - Can give a path and it will copy it to user location
-            - Otherwise, shows list and prompts to view each one
-                - Once viewed, prompts whether to use
     - `distro`
         - `list`: list known distros
         - `show`: show packages associated with a distro
@@ -20,6 +13,8 @@
         - `create`: create new environment
             - can specify a base environment
             - use current Python, or specify?
+    - `scaffold`
+        - create a new project according to some template
 
 ## v0.2.0
 
@@ -48,8 +43,12 @@
 ## Future
 
 - Subcommands
-    - `scaffold`
-        - create a new project according to some template
+    - `config`
+        - Config registry: various pre-made configs stored within `milieux`?
+        - `use`: use a pre-installed config
+            - Can give a path and it will copy it to user location
+            - Otherwise, shows list and prompts to view each one
+                - Once viewed, prompts whether to use
     - `test`
         - run `pytest` on all projects in a distro
     - `metrics`
