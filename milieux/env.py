@@ -4,14 +4,14 @@ import json
 import os
 from pathlib import Path
 import shutil
-from typing import Annotated, Optional
+from subprocess import CalledProcessError
+from typing import Optional
 
 from loguru import logger
-from typing_extensions import Doc
 
 from milieux import PROG
 from milieux.config import Config
-from milieux.errors import EnvironmentExistsError, NoPackagesError, NoSuchEnvironmentError
+from milieux.errors import EnvError, EnvironmentExistsError, NoPackagesError, NoSuchEnvironmentError
 from milieux.utils import run_command
 
 
@@ -35,12 +35,16 @@ class EnvManager:
         return env_path
 
     def create(self,
-        name: Annotated[str, Doc('name of environment')],
-        packages: Annotated[Optional[list[str]], Doc('list of packages to install in the environment')] = None,
-        force: Annotated[bool, Doc('force overwrite an existing environment')] = False
+        name: str,
+        packages: Optional[list[str]] = None,
+        seed: bool = False,
+        python: Optional[str] = None,
+        force: bool = False,
     ) -> None:
         """Creates a new environment
         Uses the version of Python currently on the user's PATH."""
+        if packages:
+            raise NotImplementedError
         self.ensure_env_dir()
         new_env_dir = self.config.env_dir_path / name
         if new_env_dir.exists():
@@ -53,8 +57,15 @@ class EnvManager:
         logger.info(f'Creating environment {name!r} in {new_env_dir}')
         new_env_dir.mkdir()
         cmd = ['uv', 'venv', new_env_dir]
-        # TODO: use --seed to include pip/setuptools/wheel?
-        res = run_command(cmd, capture_output=True)
+        if seed:
+            cmd.append('--seed')
+        if python:
+            cmd += ['--python', python]
+        try:
+            res = run_command(cmd, capture_output=True, check=True)
+        except CalledProcessError as e:
+            shutil.rmtree(new_env_dir)
+            raise EnvError(e.stderr.rstrip()) from e
         # TODO: packages (call `install`?)
         lines = [line for line in res.stderr.splitlines() if not line.startswith('Activate')]
         logger.info('\n'.join(lines))

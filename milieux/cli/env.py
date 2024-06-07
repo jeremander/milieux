@@ -44,6 +44,14 @@ class EnvCreate(EnvSubcommand, command_name='create'):
     """Create a new environment."""
     name: Optional[str] = _get_name_field(required=False)
     packages: list[str] = _get_packages_field()
+    seed: bool = field(
+        default=False,
+        metadata={'help': 'install "seed" packages (e.g. `pip`) into environment'}
+    )
+    python: Optional[str] = field(
+        default=None,
+        metadata={'args': ['-p', '--python'], 'help': 'Python interpreter for the environment'}
+    )
     force: bool = field(
         default=False,
         metadata={
@@ -54,7 +62,7 @@ class EnvCreate(EnvSubcommand, command_name='create'):
 
     def _run(self, manager: EnvManager) -> None:
         name = self.name or input('Name of environment: ')
-        manager.create(name, packages=self.packages, force=self.force)
+        manager.create(name, packages=self.packages, seed=self.seed, python=self.python, force=self.force)
 
 
 @dataclass

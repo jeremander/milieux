@@ -4,10 +4,16 @@ class MilieuxError(ValueError):
 class UserInputError(MilieuxError):
     """Error for invalid user input."""
 
-class EnvironmentExistsError(MilieuxError):
+class ConfigNotFoundError(MilieuxError):
+    """Error for when the user's config file cannot be found."""
+
+class EnvError(MilieuxError):
+    """Error related to an environment."""
+
+class EnvironmentExistsError(EnvError):
     """Error for when an environment already exists."""
 
-class NoSuchEnvironmentError(MilieuxError):
+class NoSuchEnvironmentError(EnvError):
     """Error for when an environment does not exist."""
     def __init__(self, env_name: str) -> None:
         self.env_name = env_name
@@ -15,6 +21,3 @@ class NoSuchEnvironmentError(MilieuxError):
 
 class NoPackagesError(MilieuxError):
     """Error for when no packages are provided."""
-
-class ConfigNotFoundError(MilieuxError):
-    """Error for when the user's config file cannot be found."""

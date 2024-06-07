@@ -53,6 +53,10 @@ class TestConfig:
         assert cfg.base_dir == str(base_dir)
         assert cfg.env_dir_path == Config().env_dir_path.with_name('envs2')
 
+    def test_config_path(self, tmp_config):
+        cfg_path = user_default_config_path()
+        check_main(['config', 'path'], stdout=str(cfg_path))
+
 
 class TestEnv:
 
@@ -68,6 +72,10 @@ class TestEnv:
         assert env_dir.exists()
         for subdir in ['bin', 'lib']:
             assert (env_dir / subdir).exists()
+        # try to create already-existing environment
+        check_main(['env', 'create', '-n', 'myenv'], stderr="Environment 'myenv' already exists", success=False)
+        # try to create environment with invalid Python executable
+        check_main(['env', 'create', '-n', 'myenv2', '--python', 'fake-python'], stderr='executable `fake-python` not found', success=False)
         # show all environments
         check_main(['env', 'show'], stdout=r'Environments:\s+myenv')
         # show single environment
@@ -77,6 +85,8 @@ class TestEnv:
         # remove environment
         check_main(['env', 'remove', '-n', 'myenv'], stderr="Deleting 'myenv' environment")
         check_main(['env', 'show'], stdout='No environments exist')
+        # remove nonexistent environment
+        check_main(['env', 'remove', '-n', 'myenv'], stderr="No environment named 'myenv'", success=False)
 
 
 class TestScaffold:

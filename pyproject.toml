@@ -116,7 +116,7 @@ strict = false
 disable_error_code = ["attr-defined", "no-untyped-call", "no-untyped-def"]
 
 [tool.pytest.ini_options]
-addopts = "--verbose --cov=milieux"
+addopts = "--verbose --cov=milieux --cov-config pyproject.toml"
 
 [tool.yapf]
 # NOTE: we'd like to disable vertical whitespace adjustment,

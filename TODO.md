@@ -10,8 +10,6 @@
         - `show`: show packages associated with a distro
         - `new`: create a new distro
     - `env`
-        - `create`: create new environment
-            - use current Python, or specify? Pass `--python` to `uv`
         - `install`
         - `activate`
 
