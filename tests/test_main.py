@@ -61,8 +61,8 @@ class TestConfig:
 class TestEnv:
 
     def test_env(self, tmp_config):
-        # show all environments
-        check_main(['env', 'show'], stdout='No environments exist')
+        # list all environments
+        check_main(['env', 'list'], stdout='No environments exist')
         # show nonexistent environment
         check_main(['env', 'show', '-n', 'myenv'], stderr="No environment named 'myenv'", success=False)
         # create environment
@@ -76,8 +76,8 @@ class TestEnv:
         check_main(['env', 'create', '-n', 'myenv'], stderr="Environment 'myenv' already exists", success=False)
         # try to create environment with invalid Python executable
         check_main(['env', 'create', '-n', 'fake_env', '--python', 'fake-python'], stderr='executable `fake-python` not found', success=False)
-        # show all environments
-        check_main(['env', 'show'], stdout=r'Environments:\s+myenv')
+        # list all environments
+        check_main(['env', 'list'], stdout=r'Environments:\s+myenv')
         # show single environment
         d = {'name': 'myenv', 'path': str(env_dir), 'created_at': datetime.fromtimestamp(env_dir.stat().st_ctime).isoformat()}
         check_main(['env', 'show', '-n', 'myenv'], stdout=json.dumps(d, indent=2))
@@ -90,7 +90,7 @@ class TestEnv:
         check_main(['env', 'activate', '-n', 'myenv'], stderr='To activate the environment.+/workspace/envs/myenv/bin/activate')
         # remove environment
         check_main(['env', 'remove', '-n', 'myenv'], stderr="Deleting 'myenv' environment")
-        check_main(['env', 'show'], stdout='No environments exist')
+        check_main(['env', 'list'], stdout='No environments exist')
         # remove nonexistent environment
         check_main(['env', 'remove', '-n', 'myenv'], stderr="No environment named 'myenv'", success=False)
 

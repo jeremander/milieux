@@ -11,6 +11,7 @@
         - `new`: create a new distro
     - `env`
         - `install`
+- Write `README`
 
 ## v0.2.0
 
@@ -47,9 +48,11 @@
                 - Once viewed, prompts whether to use
     - `env`
         - `create`
-            - option to specify a base environment (via `uv pip freeze`)
-            - or "stock" environments (testing, linting, etc.) with names
+            - Option to specify a base environment (via `uv pip freeze`)
+            - Or "stock" environments (testing, linting, etc.) with names
                 - can roll current `--seed` into this (e.g. `--seed default`)
+        - `list`
+            - Perhaps display owner and creation time (human-readable)
     - `test`
         - run `pytest` on all projects in a distro
     - `metrics`

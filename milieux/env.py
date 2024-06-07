@@ -106,6 +106,17 @@ class EnvManager:
         env = {**os.environ, 'VIRTUAL_ENV': str(self.get_env_path(name))}
         run_command(cmd, env=env)
 
+    def list(self) -> None:
+        """Prints the list of existing environments."""
+        env_dir = self.config.env_dir_path
+        print(f'Environment directory: {env_dir}')
+        envs = [p.name for p in env_dir.glob('*') if p.is_dir()]
+        if envs:
+            print('Environments:')
+            print('\n'.join(f'    {p}' for p in envs))
+        else:
+            print('No environments exist.')
+
     def remove(self, name: str) -> None:
         """Deletes the environment with the given name."""
         env_path = self.get_env_path(name)
@@ -113,20 +124,9 @@ class EnvManager:
         shutil.rmtree(env_path)
         logger.info(f'Deleted {env_path}')
 
-    def show(self, name: Optional[str] = None) -> None:
-        """Shows the existing environments.
-        If name is provided, shows just the existing environment."""
-        if name is None:
-            env_dir = self.config.env_dir_path
-            print(f'Environment directory: {env_dir}')
-            envs = [p.name for p in env_dir.glob('*') if p.is_dir()]
-            if envs:
-                print('Environments:')
-                print('\n'.join(f'    {p}' for p in envs))
-            else:
-                print('No environments exist.')
-        else:
-            path = self.get_env_path(name)
-            created_at = datetime.fromtimestamp(path.stat().st_ctime).isoformat()
-            d = {'name': name, 'path': str(path), 'created_at': created_at}
-            print(json.dumps(d, indent=2))
+    def show(self, name: str) -> None:
+        """Shows details about a particular environment."""
+        path = self.get_env_path(name)
+        created_at = datetime.fromtimestamp(path.stat().st_ctime).isoformat()
+        d = {'name': name, 'path': str(path), 'created_at': created_at}
+        print(json.dumps(d, indent=2))

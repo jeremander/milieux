@@ -19,19 +19,24 @@ def _get_packages_field() -> Any:
     return field(default_factory=list, metadata=metadata)
 
 
+
 @dataclass
-class EnvSubcommand(CLIDataclass):
-    """Base class for environment subcommands."""
-    name: Optional[str] = _get_name_field(required=True)
+class _EnvSubcommand(CLIDataclass):
 
     def _run(self, manager: EnvManager) -> None:
         raise NotImplementedError
 
-    def run(self) -> None:  # noqa: D102
+    def run(self) -> None:
         cfg = Config.get_config()
         assert cfg is not None, 'missing configurations'
         manager = EnvManager(config=cfg)
         self._run(manager)
+
+
+@dataclass
+class EnvSubcommand(_EnvSubcommand):
+    """Base class for environment subcommands."""
+    name: Optional[str] = _get_name_field(required=True)
 
 
 @dataclass
@@ -82,6 +87,14 @@ class EnvInstall(EnvSubcommand, command_name='install'):
 
 
 @dataclass
+class EnvList(_EnvSubcommand, command_name='list'):
+    """List all environments."""
+
+    def _run(self, manager: EnvManager) -> None:
+        manager.list()
+
+
+@dataclass
 class EnvRemove(EnvSubcommand, command_name='remove'):
     """Remove an environment."""
 
@@ -92,8 +105,8 @@ class EnvRemove(EnvSubcommand, command_name='remove'):
 
 @dataclass
 class EnvShow(EnvSubcommand, command_name='show'):
-    """Show environments."""
-    name: Optional[str] = _get_name_field(required=False)
+    """Show info about an environment."""
+    name: str = _get_name_field(required=True)
 
     def _run(self, manager: EnvManager) -> None:
         manager.show(self.name)
@@ -107,6 +120,7 @@ class EnvCmd(CLIDataclass, command_name='env'):
         EnvActivate,
         EnvCreate,
         EnvInstall,
+        EnvList,
         EnvRemove,
         EnvShow
     ] = field(metadata={'subcommand': True})
