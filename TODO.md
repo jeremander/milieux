@@ -11,10 +11,9 @@
         - `new`: create a new distro
     - `env`
         - `create`: create new environment
-            - can specify a base environment
-            - use current Python, or specify?
-    - `scaffold`
-        - create a new project according to some template
+            - use current Python, or specify? Pass `--python` to `uv`
+        - `install`
+        - `activate`
 
 ## v0.2.0
 
@@ -49,6 +48,8 @@
             - Can give a path and it will copy it to user location
             - Otherwise, shows list and prompts to view each one
                 - Once viewed, prompts whether to use
+    - `env`
+        - `create`: option to specify a base environment (via `uv pip freeze`)
     - `test`
         - run `pytest` on all projects in a distro
     - `metrics`
@@ -56,3 +57,5 @@
     - `docs`
         - `sphinx` or `mkdocs`
         - Build a single site, or multiple sites for each project
+    - `scaffold`
+        - Use `poetry`, `cookiecutter`, etc.

@@ -13,7 +13,7 @@ from milieux.errors import ConfigNotFoundError, UserInputError
 
 @dataclass
 class ConfigNew(CLIDataclass, command_name='new'):
-    """create a new config file"""
+    """Create a new config file."""
     stdout: bool = field(
         default=False,
         metadata={'help': 'output config file to stdout'}
@@ -51,8 +51,17 @@ class ConfigNew(CLIDataclass, command_name='new'):
 
 
 @dataclass
+class ConfigPath(CLIDataclass, command_name='path'):
+    """Print out path to the configurations."""
+
+    def run(self) -> None:
+        """Displays the path to the user's config file."""
+        print(user_default_config_path())
+
+
+@dataclass
 class ConfigShow(CLIDataclass, command_name='show'):
-    """show the configurations"""
+    """Show the configurations."""
 
     def run(self) -> None:
         """Displays the contents of the user's config file."""
@@ -65,6 +74,10 @@ class ConfigShow(CLIDataclass, command_name='show'):
 
 @dataclass
 class ConfigCmd(CLIDataclass, command_name='config'):
-    """manage configurations"""
+    """Manage configurations."""
 
-    subcommand: Union[ConfigNew, ConfigShow] = field(metadata={'subcommand': True})
+    subcommand: Union[
+        ConfigNew,
+        ConfigPath,
+        ConfigShow,
+    ] = field(metadata={'subcommand': True})

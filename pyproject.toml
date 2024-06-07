@@ -18,6 +18,7 @@ classifiers = [
 ]
 dependencies = [
   "fancy_dataclass >= 0.4.6",
+  "hatch",
   "loguru",
   "typing_extensions >= 4.10",
 ]

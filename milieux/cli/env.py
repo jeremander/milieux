@@ -36,12 +36,12 @@ class EnvSubcommand(CLIDataclass):
 
 @dataclass
 class EnvActivate(EnvSubcommand, command_name='activate'):
-    """activate an environment"""
+    """Activate an environment."""
 
 
 @dataclass
 class EnvCreate(EnvSubcommand, command_name='create'):
-    """create a new environment"""
+    """Create a new environment."""
     name: Optional[str] = _get_name_field(required=False)
     packages: list[str] = _get_packages_field()
     force: bool = field(
@@ -59,7 +59,7 @@ class EnvCreate(EnvSubcommand, command_name='create'):
 
 @dataclass
 class EnvInstall(EnvSubcommand, command_name='install'):
-    """install packages into an environment"""
+    """Install packages into an environment."""
     packages: list[str] = _get_packages_field()
     # TODO: -d/--distro (base distribution)
 
@@ -70,7 +70,7 @@ class EnvInstall(EnvSubcommand, command_name='install'):
 
 @dataclass
 class EnvRemove(EnvSubcommand, command_name='remove'):
-    """remove an environment"""
+    """Remove an environment."""
 
     def _run(self, manager: EnvManager) -> None:
         assert self.name is not None
@@ -79,7 +79,7 @@ class EnvRemove(EnvSubcommand, command_name='remove'):
 
 @dataclass
 class EnvShow(EnvSubcommand, command_name='show'):
-    """show environments"""
+    """Show environments."""
     name: Optional[str] = _get_name_field(required=False)
 
     def _run(self, manager: EnvManager) -> None:
@@ -88,7 +88,7 @@ class EnvShow(EnvSubcommand, command_name='show'):
 
 @dataclass
 class EnvCmd(CLIDataclass, command_name='env'):
-    """manage environments"""
+    """Manage environments."""
 
     subcommand: Union[
         EnvActivate,

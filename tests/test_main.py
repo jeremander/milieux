@@ -77,3 +77,16 @@ class TestEnv:
         # remove environment
         check_main(['env', 'remove', '-n', 'myenv'], stderr="Deleting 'myenv' environment")
         check_main(['env', 'show'], stdout='No environments exist')
+
+
+class TestScaffold:
+
+    def test_scaffold(self, monkeypatch, tmp_config):
+        # set up a new project
+        projects_path = tmp_config.base_dir_path / 'projects'
+        projects_path.mkdir()
+        monkeypatch.chdir(projects_path)
+        check_main(['scaffold', 'my_project'], stderr="Creating new project 'my_project' with 'hatch' utility")
+        project_path = projects_path / 'my_project'
+        assert project_path.is_dir()
+        assert (project_path / 'README.md').exists()
