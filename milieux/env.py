@@ -5,9 +5,9 @@ import os
 from pathlib import Path
 import re
 import shutil
-from subprocess import CalledProcessError
+from subprocess import CalledProcessError, CompletedProcess
 import sys
-from typing import Annotated, Optional
+from typing import Annotated, Any, Optional
 
 from loguru import logger
 from typing_extensions import Doc
@@ -66,6 +66,11 @@ class Environment:
         minor_version = '.'.join(self.python_version.split('.')[:2])
         return self.env_path / 'lib' / f'python{minor_version}' / 'site-packages'
 
+    def run_command(self, cmd: list[str], **kwargs: Any) -> CompletedProcess[str]:
+        """Runs a command with the VIRTUAL_ENV environment variable set."""
+        cmd_env = {**os.environ, 'VIRTUAL_ENV': str(self.env_path)}
+        return run_command(cmd, env=cmd_env, **kwargs)
+
 
 @dataclass
 class EnvManager:
@@ -81,6 +86,21 @@ class EnvManager:
     def get_environment(self, name: str) -> Environment:
         """Gets the Environment with the given name."""
         return Environment(self.config.env_dir_path, name)
+
+    def _install_or_uninstall(self, install: bool, name: str, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None) -> None:
+        """Installs one or more packages into the given environment."""
+        operation = 'install' if install else 'uninstall'
+        if (not packages) and (not requirements):
+            raise NoPackagesError(f'Must specify packages to {operation}')
+        cmd = ['uv', 'pip', operation]
+        if install and (index_url := self.config.pip.index_url):
+            cmd.extend(['--index-url', index_url])
+        # TODO: extra index URLs?
+        if packages:
+            cmd.extend(packages)
+        if requirements:
+            cmd.extend(['-r'] + requirements)
+        self.get_environment(name).run_command(cmd)
 
     def activate(self, name: str) -> None:
         """Prints info about how to activate the environment."""
@@ -138,22 +158,17 @@ class EnvManager:
         env = self.get_environment(name)
         logger.info(f'Activate with either of these commands:\n\tsource {env.activate_path}\n\t{PROG} env activate {name}')
 
-    def _install_or_uninstall(self, install: bool, name: str, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None) -> None:
-        """Installs one or more packages into the given environment."""
-        operation = 'install' if install else 'uninstall'
-        if (not packages) and (not requirements):
-            raise NoPackagesError(f'Must specify packages to {operation}')
-        cmd = ['uv', 'pip', operation]
-        if install and (index_url := self.config.pip.index_url):
-            cmd.extend(['--index-url', index_url])
-        # TODO: extra index URLs?
-        if packages:
-            cmd.extend(packages)
-        if requirements:
-            cmd.extend(['-r'] + requirements)
-        env = self.get_environment(name)
-        cmd_env = {**os.environ, 'VIRTUAL_ENV': str(env.env_path)}
-        run_command(cmd, env=cmd_env)
+    def get_installed_packages(self, name: str) -> list[str]:
+        """Gets a list of installed packages in an environment."""
+        cmd = ['uv', 'pip', 'freeze']
+        res = self.get_environment(name).run_command(cmd, text=True, capture_output=True)
+        return res.stdout.splitlines()
+
+    def freeze(self, name: str) -> None:
+        """Prints out the packages currently installed in an environment."""
+        packages = self.get_installed_packages(name)
+        for pkg in packages:
+            print(pkg)
 
     def install(self, name: str, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None) -> None:
         """Installs one or more packages into the given environment."""

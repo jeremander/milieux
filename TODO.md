@@ -10,7 +10,6 @@
         - `show`: show packages associated with a distro
         - `new`: create a new distro
     - `env`
-        - `freeze`
         - `install`
             - handle distros
         - `show`: option to list installed packages (via `freeze`)

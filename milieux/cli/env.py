@@ -73,6 +73,15 @@ class EnvCreate(EnvSubcommand, command_name='create'):
 
 
 @dataclass
+class EnvFreeze(EnvSubcommand, command_name='freeze'):
+    """List installed packages in an environment."""
+    name: str = _get_name_field(required=True)
+
+    def _run(self, manager: EnvManager) -> None:
+        manager.freeze(self.name)
+
+
+@dataclass
 class EnvInstall(_EnvSubcommand, command_name='install'):
     """Install packages into an environment."""
     packages: list[str] = field(metadata={'help': _packages_field_help})
@@ -120,7 +129,7 @@ class EnvShow(EnvSubcommand, command_name='show'):
 
 @dataclass
 class EnvUninstall(_EnvSubcommand, command_name='uninstall'):
-    """Install packages into an environment."""
+    """Uninstall packages from an environment."""
     packages: list[str] = field(metadata={'help': _packages_field_help})
     name: Optional[str] = _get_name_field(required=True)
     requirements: list[str] = field(
@@ -145,6 +154,7 @@ class EnvCmd(CLIDataclass, command_name='env'):
     subcommand: Union[
         EnvActivate,
         EnvCreate,
+        EnvFreeze,
         EnvInstall,
         EnvList,
         EnvRemove,
