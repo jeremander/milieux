@@ -75,13 +75,19 @@ class TestEnv:
         # try to create already-existing environment
         check_main(['env', 'create', '-n', 'myenv'], stderr="Environment 'myenv' already exists", success=False)
         # try to create environment with invalid Python executable
-        check_main(['env', 'create', '-n', 'myenv2', '--python', 'fake-python'], stderr='executable `fake-python` not found', success=False)
+        check_main(['env', 'create', '-n', 'fake_env', '--python', 'fake-python'], stderr='executable `fake-python` not found', success=False)
         # show all environments
         check_main(['env', 'show'], stdout=r'Environments:\s+myenv')
         # show single environment
         d = {'name': 'myenv', 'path': str(env_dir), 'created_at': datetime.fromtimestamp(env_dir.stat().st_ctime).isoformat()}
         check_main(['env', 'show', '-n', 'myenv'], stdout=json.dumps(d, indent=2))
-        # TODO: install, activate
+        # show nonexistent environment
+        check_main(['env', 'show', '-n', 'fake_env'], stderr="No environment named 'fake_env'", success=False)
+        # TODO: install
+        # activate nonexistent environment
+        check_main(['env', 'activate', '-n', 'fake_env'], stderr="No environment named 'fake_env'", success=False)
+        # activate environment (doesn't really activate, just prints the command)
+        check_main(['env', 'activate', '-n', 'myenv'], stderr='To activate the environment.+/workspace/envs/myenv/bin/activate')
         # remove environment
         check_main(['env', 'remove', '-n', 'myenv'], stderr="Deleting 'myenv' environment")
         check_main(['env', 'show'], stdout='No environments exist')

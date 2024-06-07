@@ -37,6 +37,11 @@ class EnvSubcommand(CLIDataclass):
 @dataclass
 class EnvActivate(EnvSubcommand, command_name='activate'):
     """Activate an environment."""
+    name: Optional[str] = _get_name_field(required=True)
+
+    def _run(self, manager: EnvManager) -> None:
+        name = self.name or input('Name of environment: ')
+        manager.activate(name)
 
 
 @dataclass

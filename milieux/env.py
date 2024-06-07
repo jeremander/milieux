@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import shutil
 from subprocess import CalledProcessError
+import sys
 from typing import Optional
 
 from loguru import logger
@@ -33,6 +34,27 @@ class EnvManager:
         if not env_path.exists():
             raise NoSuchEnvironmentError(name)
         return env_path
+
+    def get_activate_path(self, name: str) -> Path:
+        """Given an environment name, gets the path to the environment's activation script."""
+        return self.get_env_path(name) / 'bin' / 'activate'
+
+    def activate(self, name: str) -> None:
+        """Activates an environment."""
+        activate_path = self.get_activate_path(name)
+        if not activate_path.exists():
+            raise FileNotFoundError(activate_path)
+        # NOTE: no easy way to activate new shell and "source" a file in Python
+        # instead, we just print out the command
+        def eprint(s: str) -> None:
+            print(s, file=sys.stderr)
+        print(f'source {activate_path}')
+        eprint('\nTo activate the environment, run the following shell command:\n')
+        eprint(f'source {activate_path}')
+        eprint('\nAlternatively, you can run (with backticks):\n')
+        eprint(f'`{PROG} env activate -n {name}`')
+        eprint('\nTo deactivate the environment, run:\n')
+        eprint('deactivate\n')
 
     def create(self,
         name: str,
@@ -69,7 +91,7 @@ class EnvManager:
         # TODO: packages (call `install`?)
         lines = [line for line in res.stderr.splitlines() if not line.startswith('Activate')]
         logger.info('\n'.join(lines))
-        activate_path = new_env_dir / 'bin' / 'activate'
+        activate_path = self.get_activate_path(name)
         logger.info(f'Activate with either of these commands:\n\tsource {activate_path}\n\t{PROG} env activate {name}')
 
     def install(self, name: str, packages: list[str]) -> None:

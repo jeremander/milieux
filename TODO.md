@@ -11,7 +11,6 @@
         - `new`: create a new distro
     - `env`
         - `install`
-        - `activate`
 
 ## v0.2.0
 
@@ -47,7 +46,10 @@
             - Otherwise, shows list and prompts to view each one
                 - Once viewed, prompts whether to use
     - `env`
-        - `create`: option to specify a base environment (via `uv pip freeze`)
+        - `create`
+            - option to specify a base environment (via `uv pip freeze`)
+            - or "stock" environments (testing, linting, etc.) with names
+                - can roll current `--seed` into this (e.g. `--seed default`)
     - `test`
         - run `pytest` on all projects in a distro
     - `metrics`

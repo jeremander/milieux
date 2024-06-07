@@ -54,11 +54,12 @@ def check_main(
             assert success == (e.code == 0)  # noqa: PT017
         finally:
             loguru.logger.remove(sink_id)
+        flags = re.MULTILINE | re.DOTALL
         if stdout is not None:
             assert sio_out is not None
             for s in stdout:
-                assert re.search(s, sio_out.getvalue())
+                assert re.search(s, sio_out.getvalue(), flags=flags)
         if stderr is not None:
             assert sio_err is not None
             for s in stderr:
-                assert re.search(s, sio_err.getvalue())
+                assert re.search(s, sio_err.getvalue(), flags=flags)
