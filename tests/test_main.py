@@ -5,6 +5,7 @@ from typing import get_args, get_type_hints
 from milieux import PROG
 from milieux.cli.main import MilieuxCLI
 from milieux.config import Config, user_default_base_dir, user_default_config_path
+from milieux.env import Environment
 
 from . import check_main
 
@@ -83,7 +84,6 @@ class TestEnv:
         check_main(['env', 'show', '-n', 'myenv'], stdout=json.dumps(d, indent=2))
         # show nonexistent environment
         check_main(['env', 'show', '-n', 'fake_env'], stderr="No environment named 'fake_env'", success=False)
-        # TODO: install
         # activate nonexistent environment
         check_main(['env', 'activate', '-n', 'fake_env'], stderr="No environment named 'fake_env'", success=False)
         # activate environment (doesn't really activate, just prints the command)
@@ -93,6 +93,48 @@ class TestEnv:
         check_main(['env', 'list'], stdout='No environments exist')
         # remove nonexistent environment
         check_main(['env', 'remove', '-n', 'myenv'], stderr="No environment named 'myenv'", success=False)
+
+    def test_install(self, monkeypatch, tmp_config):
+        check_main(['env', 'create'], stdin=['myenv'])
+        # create two local packages, for test installations
+        projects_path = tmp_config.base_dir_path / 'projects'
+        projects_path.mkdir()
+        monkeypatch.chdir(projects_path)
+        check_main(['scaffold', 'project1'])
+        check_main(['scaffold', 'project2'])
+        # attempt to install nothing
+        check_main(['env', 'install', '-n', 'myenv'], stderr='Must specify packages to install', success=False)
+        # attempt to install into nonexistent environment
+        check_main(['env', 'install', '-n', 'fake_env', 'file://project1'], stderr="No environment named 'fake_env'", success=False)
+        # install package into environment
+        check_main(['env', 'install', '-n', 'myenv', 'file://project1'], stderr='file://project1')
+        env = Environment(tmp_config.env_dir_path, 'myenv')
+        def check_pkg(pkg_name: str, exists: bool) -> None:
+            pkg_dir = env.site_packages_path / pkg_name
+            if exists:
+                assert pkg_dir.exists()
+                init_py = pkg_dir / '__init__.py'
+                assert init_py.exists()
+            else:
+                assert not pkg_dir.exists()
+        check_pkg('project1', True)
+        check_pkg('project2', False)
+        # install requirements file into environment
+        reqs_path = projects_path / 'reqs.txt'
+        with open(reqs_path, 'w') as f:
+            print('file://project2', file=f)
+        check_main(['env', 'install', '-n', 'myenv', '-r', str(reqs_path)], stderr=f'-r {reqs_path}')
+        check_pkg('project1', True)
+        check_pkg('project2', True)
+        # uninstall package
+        check_main(['env', 'uninstall', '-n', 'myenv', 'project1'], stderr='project1')
+        check_pkg('project1', False)
+        check_pkg('project2', True)
+        check_main(['env', 'uninstall', '-n', 'myenv', '-r', str(reqs_path)], stderr=f'-r {reqs_path}')
+        check_pkg('project1', False)
+        check_pkg('project2', False)
+        # uninstall nonexistent package
+        check_main(['env', 'uninstall', '-n', 'myenv', 'project3'], stderr='project3', success=False)
 
 
 class TestScaffold:

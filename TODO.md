@@ -10,7 +10,16 @@
         - `show`: show packages associated with a distro
         - `new`: create a new distro
     - `env`
+        - `freeze`
         - `install`
+            - handle distros
+        - `show`: option to list installed packages (via `freeze`)
+        - `sync`: sync all deps from a distro (first compile)
+<!-- # Identify all transitive dependencies and create requirements.txt
+uv pip compile requirements.in --quiet --output-file requirements.txt
+
+# Update environment to match requirements.txt
+uv pip sync requirements.txt         -->
 - Write `README`
 
 ## v0.2.0
@@ -28,6 +37,7 @@
 
 - Switch to `rich` for prompts, tables, etc.
 - Gracefully catch `KeyboardInterrupt` in prompts
+- Quiet/verbose mode for `uv` subcommands
 - "Recipes" (in README)
     - create dev environment
     - activate/use dev environment (including someone else's)

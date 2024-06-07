@@ -11,13 +11,7 @@ def _get_name_field(required: bool) -> Any:
     metadata = {'args': ['-n', '--name'], 'required': required, 'help': 'name of environment'}
     return field(default=None, metadata=metadata)
 
-def _get_packages_field() -> Any:
-    metadata = {
-        'nargs': '+',
-        'help': 'list of packages to install into the environment (can optionally include constraints, e.g. "numpy>=1.25")'
-    }
-    return field(default_factory=list, metadata=metadata)
-
+_packages_field_help = 'list of packages to install into the environment (can optionally include constraints, e.g. "numpy>=1.25")'
 
 
 @dataclass
@@ -53,7 +47,10 @@ class EnvActivate(EnvSubcommand, command_name='activate'):
 class EnvCreate(EnvSubcommand, command_name='create'):
     """Create a new environment."""
     name: Optional[str] = _get_name_field(required=False)
-    packages: list[str] = _get_packages_field()
+    packages: list[str] = field(
+        default_factory=list,
+        metadata={'nargs': '+', 'help': _packages_field_help}
+    )
     seed: bool = field(
         default=False,
         metadata={'help': 'install "seed" packages (e.g. `pip`) into environment'}
@@ -76,14 +73,23 @@ class EnvCreate(EnvSubcommand, command_name='create'):
 
 
 @dataclass
-class EnvInstall(EnvSubcommand, command_name='install'):
+class EnvInstall(_EnvSubcommand, command_name='install'):
     """Install packages into an environment."""
-    packages: list[str] = _get_packages_field()
-    # TODO: -d/--distro (base distribution)
+    packages: list[str] = field(metadata={'help': _packages_field_help})
+    name: Optional[str] = _get_name_field(required=True)
+    requirements: list[str] = field(
+        default_factory=list,
+        metadata={'nargs': '+', 'args': ['-r', '--requirements'], 'help': 'requirements file(s) listing packages'}
+    )
+    distros: list[str] = field(
+        default_factory=list,
+        metadata={'nargs': '+', 'args': ['-d', '--distros'], 'help': 'distro name(s) providing packages'}
+    )
 
     def _run(self, manager: EnvManager) -> None:
         assert self.name is not None
-        manager.install(self.name, packages=self.packages)
+        # TODO: map distros to requirements files
+        manager.install(self.name, packages=self.packages, requirements=self.requirements)
 
 
 @dataclass
@@ -113,6 +119,26 @@ class EnvShow(EnvSubcommand, command_name='show'):
 
 
 @dataclass
+class EnvUninstall(_EnvSubcommand, command_name='uninstall'):
+    """Install packages into an environment."""
+    packages: list[str] = field(metadata={'help': _packages_field_help})
+    name: Optional[str] = _get_name_field(required=True)
+    requirements: list[str] = field(
+        default_factory=list,
+        metadata={'nargs': '+', 'args': ['-r', '--requirements'], 'help': 'requirements file(s) listing packages'}
+    )
+    distros: list[str] = field(
+        default_factory=list,
+        metadata={'nargs': '+', 'args': ['-d', '--distros'], 'help': 'distro name(s) providing packages'}
+    )
+
+    def _run(self, manager: EnvManager) -> None:
+        assert self.name is not None
+        # TODO: map distros to requirements files
+        manager.uninstall(self.name, packages=self.packages, requirements=self.requirements)
+
+
+@dataclass
 class EnvCmd(CLIDataclass, command_name='env'):
     """Manage environments."""
 
@@ -122,5 +148,6 @@ class EnvCmd(CLIDataclass, command_name='env'):
         EnvInstall,
         EnvList,
         EnvRemove,
-        EnvShow
+        EnvShow,
+        EnvUninstall,
     ] = field(metadata={'subcommand': True})

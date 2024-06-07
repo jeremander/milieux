@@ -50,6 +50,10 @@ class Config(ConfigDataclass, TOMLDataclass):  # type: ignore[misc]
         str,
         Doc('directory for virtual environments')
     ] = 'envs'
+    distro_dir: Annotated[
+        str,
+        Doc('directory for distros (Python requirements files)')
+    ] = 'distros'
     pip: PipConfig = field(default_factory=PipConfig)
 
     @property
@@ -61,3 +65,8 @@ class Config(ConfigDataclass, TOMLDataclass):  # type: ignore[misc]
     def env_dir_path(self) -> Path:
         """Gets the path to the environment directory."""
         return resolve_path(self.env_dir, Path(self.base_dir))
+
+    @property
+    def distro_dir_path(self) -> Path:
+        """Gets the path to the distro directory."""
+        return resolve_path(self.distro_dir, Path(self.base_dir))
