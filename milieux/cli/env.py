@@ -122,9 +122,10 @@ class EnvRemove(EnvSubcommand, command_name='remove'):
 class EnvShow(EnvSubcommand, command_name='show'):
     """Show info about an environment."""
     name: str = _get_name_field(required=True)
+    list_packages: bool = field(default=False, metadata={'help': 'include list of installed packages'})
 
     def _run(self, manager: EnvManager) -> None:
-        manager.show(self.name)
+        manager.show(self.name, list_packages=self.list_packages)
 
 
 @dataclass

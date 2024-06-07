@@ -181,12 +181,13 @@ class EnvManager:
         shutil.rmtree(env_path)
         logger.info(f'Deleted {env_path}')
 
-    def show(self, name: str) -> None:
+    def show(self, name: str, list_packages: bool = False) -> None:
         """Shows details about a particular environment."""
         path = self.get_environment(name).env_path
         created_at = datetime.fromtimestamp(path.stat().st_ctime).isoformat()
-        d = {'name': name, 'path': str(path), 'created_at': created_at}
-        # TODO: list of installed packages?
+        d: dict[str, Any] = {'name': name, 'path': str(path), 'created_at': created_at}
+        if list_packages:
+            d['packages'] = self.get_installed_packages(name)
         print(json.dumps(d, indent=2))
 
     def uninstall(self, name: str, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None) -> None:

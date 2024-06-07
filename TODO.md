@@ -12,7 +12,6 @@
     - `env`
         - `install`
             - handle distros
-        - `show`: option to list installed packages (via `freeze`)
         - `sync`: sync all deps from a distro (first compile)
 <!-- # Identify all transitive dependencies and create requirements.txt
 uv pip compile requirements.in --quiet --output-file requirements.txt

@@ -128,6 +128,7 @@ class TestEnv:
         check_pkg('project2', True)
         # print out packages in environment
         check_main(['env', 'freeze', '-n', 'myenv'], stdout='project1 @ file:///.+project2 @ file:///')
+        check_main(['env', 'show', '-n', 'myenv', '--list-packages'], stdout=r'"name": "myenv".+"packages": \[\s*"project1 @ file:///')
         # uninstall package
         check_main(['env', 'uninstall', '-n', 'myenv', 'project1'], stderr='project1')
         check_pkg('project1', False)
