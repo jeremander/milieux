@@ -37,35 +37,6 @@ class EnvActivate(EnvSubcommand, command_name='activate'):
 
 
 @dataclass
-class EnvCreate(EnvSubcommand, command_name='create'):
-    """Create a new environment."""
-    name: Optional[str] = _get_name_field(required=False)
-    packages: list[str] = field(
-        default_factory=list,
-        metadata={'nargs': '+', 'help': _packages_field_help}
-    )
-    seed: bool = field(
-        default=False,
-        metadata={'help': 'install "seed" packages (e.g. `pip`) into environment'}
-    )
-    python: Optional[str] = field(
-        default=None,
-        metadata={'args': ['-p', '--python'], 'help': 'Python interpreter for the environment'}
-    )
-    force: bool = field(
-        default=False,
-        metadata={
-            'args': ['-f', '--force'],
-            'help': 'force overwrite of environment if it exists'
-        }
-    )
-
-    def run(self) -> None:
-        name = self.name or input('Name of environment: ')
-        Environment.create(name, packages=self.packages, seed=self.seed, python=self.python, force=self.force)
-
-
-@dataclass
 class EnvFreeze(EnvSubcommand, command_name='freeze'):
     """List installed packages in an environment."""
     name: str = _get_name_field(required=True)
@@ -100,6 +71,35 @@ class EnvList(_EnvSubcommand, command_name='list'):
 
     def run(self) -> None:
         Environment.list()
+
+
+@dataclass
+class EnvNew(EnvSubcommand, command_name='new'):
+    """Create a new environment."""
+    name: Optional[str] = _get_name_field(required=False)
+    packages: list[str] = field(
+        default_factory=list,
+        metadata={'nargs': '+', 'help': _packages_field_help}
+    )
+    seed: bool = field(
+        default=False,
+        metadata={'help': 'install "seed" packages (e.g. `pip`) into environment'}
+    )
+    python: Optional[str] = field(
+        default=None,
+        metadata={'args': ['-p', '--python'], 'help': 'Python interpreter for the environment'}
+    )
+    force: bool = field(
+        default=False,
+        metadata={
+            'args': ['-f', '--force'],
+            'help': 'force overwrite of environment if it exists'
+        }
+    )
+
+    def run(self) -> None:
+        name = self.name or input('Name of environment: ')
+        Environment.new(name, packages=self.packages, seed=self.seed, python=self.python, force=self.force)
 
 
 @dataclass
@@ -147,10 +147,10 @@ class EnvCmd(CLIDataclass, command_name='env'):
 
     subcommand: Union[
         EnvActivate,
-        EnvCreate,
         EnvFreeze,
         EnvInstall,
         EnvList,
+        EnvNew,
         EnvRemove,
         EnvShow,
         EnvUninstall,

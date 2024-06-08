@@ -1,11 +1,13 @@
 from datetime import datetime
 import json
+from pathlib import Path
 from typing import get_args, get_type_hints
 
 from milieux import PROG
 from milieux.cli.main import MilieuxCLI
 from milieux.config import Config, user_default_base_dir, user_default_config_path
 from milieux.env import Environment
+from milieux.utils import read_lines
 
 from . import check_main
 
@@ -59,9 +61,47 @@ class TestConfig:
         check_main(['config', 'path'], stdout=str(cfg_path))
 
 
-class TestEnv:
+class TestDistro:
+
+    def _check_distro(self, distro_path, packages):
+        lines = read_lines(distro_path)
+        assert lines == packages
+
+    def test_distro(self, monkeypatch, tmp_config):
+        projects_path = tmp_config.base_dir_path / 'projects'
+        projects_path.mkdir()
+        monkeypatch.chdir(projects_path)
+        assert not tmp_config.distro_dir_path.exists()
+        # TODO: list all distros
+        # TODO: show nonexistent environment
+        def get_distro_path(name: str) -> Path:
+            return Path(tmp_config.distro_dir_path / f'{name}.in')
+        name = 'mydist'
+        # create distro with no packages
+        check_main(['distro', 'new', name], stderr='Must specify at least one package', success=False)
+        assert not get_distro_path(name).exists()
+        # create distro with packages
+        check_main(['distro', 'new', name, '--packages', 'pkg1', 'pkg2'], stderr=f'Wrote {name!r} requirements to')
+        distro_path = get_distro_path(name)
+        assert distro_path.exists()
+        self._check_distro(distro_path, ['pkg1', 'pkg2'])
+        # write same distro without -f flag
+        check_main(['distro', 'new', name, '--packages', 'pkg1'], stderr=f'Distro {name!r} already exists', success=False)
+        # create distro with requirements file
+        req_path = projects_path / f'{name}.in'
+        req_path.write_text('pkg1\npkg3\n pkg2  \n')
+        output = [f'Distro {name!r} already exists', f'Wrote {name!r} requirements to']
+        check_main(['distro', 'new', name, '-r', str(req_path), '-f'], stderr=output)
+        self._check_distro(distro_path, ['pkg1', 'pkg2', 'pkg3'])
+        # create distro with both packages and requirements file
+        check_main(['distro', 'new', name, '--packages', 'pkg4', '-r', str(req_path), '-f'], stderr=output)
+        self._check_distro(distro_path, ['pkg1', 'pkg2', 'pkg3', 'pkg4'])
+        # use nonexistent requirements file
+        check_main(['distro', 'new', name, '-r', 'fake_reqs.in', '-f'], stderr='No requirements file: fake_reqs.in', success=False)
+
 
     def test_env(self, tmp_config):
+        assert not tmp_config.env_dir_path.exists()
         # list all environments
         check_main(['env', 'list'], stdout='No environments exist')
         # show nonexistent environment
@@ -69,14 +109,14 @@ class TestEnv:
         # create environment
         env_dir = tmp_config.env_dir_path / 'myenv'
         out = [f"Creating environment 'myenv' in {env_dir}", f'{PROG} env activate myenv']
-        check_main(['env', 'create'], stdin=['myenv'], stderr=out)
+        check_main(['env', 'new'], stdin=['myenv'], stderr=out)
         assert env_dir.exists()
         for subdir in ['bin', 'lib']:
             assert (env_dir / subdir).exists()
         # try to create already-existing environment
-        check_main(['env', 'create', '-n', 'myenv'], stderr="Environment 'myenv' already exists", success=False)
+        check_main(['env', 'new', '-n', 'myenv'], stderr="Environment 'myenv' already exists", success=False)
         # try to create environment with invalid Python executable
-        check_main(['env', 'create', '-n', 'fake_env', '--python', 'fake-python'], stderr='executable `fake-python` not found', success=False)
+        check_main(['env', 'new', '-n', 'fake_env', '--python', 'fake-python'], stderr='executable `fake-python` not found', success=False)
         # list all environments
         check_main(['env', 'list'], stdout=r'Environments:\s+myenv')
         # show single environment
@@ -95,7 +135,7 @@ class TestEnv:
         check_main(['env', 'remove', '-n', 'myenv'], stderr="No environment named 'myenv'", success=False)
 
     def test_install(self, monkeypatch, tmp_config):
-        check_main(['env', 'create'], stdin=['myenv'])
+        check_main(['env', 'new'], stdin=['myenv'])
         # create two local packages, for test installations
         projects_path = tmp_config.base_dir_path / 'projects'
         projects_path.mkdir()

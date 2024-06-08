@@ -15,16 +15,13 @@ from typing_extensions import Doc, Self
 from milieux import PROG
 from milieux.config import get_config
 from milieux.errors import EnvError, EnvironmentExistsError, MilieuxError, NoPackagesError, NoSuchEnvironmentError
-from milieux.utils import run_command
+from milieux.utils import ensure_path, run_command
 
 
 def get_env_base_dir() -> Path:
     """Checks if the configured environment directory exists, and if not, creates it."""
     cfg = get_config()
-    if not (path := cfg.env_dir_path).exists():
-        logger.info(f'mkdir -p {path}')
-        path.mkdir(parents=True)
-    return path
+    return ensure_path(cfg.env_dir_path)
 
 
 @dataclass
@@ -68,7 +65,7 @@ class Environment:
             s = f.read()
         match = re.search(r'version_info\s*=\s*(\d+\.\d+\.\d+)', s)
         if not match:
-            raise MilieuxError(f'could not get Python version info from {self.config_path}')
+            raise MilieuxError(f'Could not get Python version info from {self.config_path}')
         (version,) = match.groups(0)
         assert isinstance(version, str)
         return version
@@ -133,14 +130,14 @@ class Environment:
         eprint('deactivate\n')
 
     @classmethod
-    def create(cls,
+    def new(cls,
         name: str,
         packages: Optional[list[str]] = None,
         seed: bool = False,
         python: Optional[str] = None,
         force: bool = False,
     ) -> Self:
-        """Creates a new environment
+        """Creates a new environment.
         Uses the version of Python currently on the user's PATH."""
         if packages:
             raise NotImplementedError

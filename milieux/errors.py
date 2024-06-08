@@ -1,3 +1,6 @@
+from pathlib import Path
+
+
 class MilieuxError(ValueError):
     """Custom class for errors meant to be handled gracefully."""
 
@@ -6,6 +9,12 @@ class UserInputError(MilieuxError):
 
 class ConfigNotFoundError(MilieuxError):
     """Error for when the user's config file cannot be found."""
+
+class DistroError(MilieuxError):
+    """Error related to a distro."""
+
+class DistroExistsError(DistroError):
+    """Error for when a distro already exists."""
 
 class EnvError(MilieuxError):
     """Error related to an environment."""
@@ -27,3 +36,9 @@ class NoSuchDistributionError(EnvError):
 
 class NoPackagesError(MilieuxError):
     """Error for when no packages are provided."""
+
+class NoSuchRequirementsFileError(MilieuxError):
+    """Error for when a requirements file does not exist."""
+    def __init__(self, reqs_path: Path | str) -> None:
+        self.reqs_path = reqs_path
+        super().__init__(f'No requirements file: {reqs_path}')

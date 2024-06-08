@@ -16,7 +16,6 @@ def run_command(cmd: list[Any], **kwargs: Any) -> subprocess.CompletedProcess[st
     kwargs = {'text': True, **kwargs}  # use text mode by default
     return subprocess.run(cmd, **kwargs)
 
-
 def resolve_path(path: str, base_dir: Path) -> Path:
     """Attempts to resolve a path to an absolute path.
     If it is a relative path, resolves it relative to the given base_dir."""
@@ -30,3 +29,15 @@ def resolve_path(path: str, base_dir: Path) -> Path:
         return resolve_path(str(p.resolve()), base_dir)
     # otherwise, a relative path
     return base_dir / path
+
+def ensure_path(path: Path) -> Path:
+    """If the given path does not exist, creates it.
+    Then returns the Path."""
+    if not path.exists():
+        logger.info(f'mkdir -p {path}')
+        path.mkdir(parents=True)
+    return path
+
+def read_lines(path: Path) -> list[str]:
+    """Reads lines of text from a file."""
+    return path.read_text().splitlines()

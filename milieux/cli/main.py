@@ -10,6 +10,7 @@ from loguru import logger
 
 from milieux import PKG_NAME
 from milieux.cli.config import ConfigCmd
+from milieux.cli.distro import DistroCmd
 from milieux.cli.env import EnvCmd
 from milieux.cli.scaffold import ScaffoldCmd
 from milieux.config import Config, user_default_config_path
@@ -22,6 +23,7 @@ class MilieuxCLI(CLIDataclass):
 
     subcommand: Union[
         ConfigCmd,
+        DistroCmd,
         EnvCmd,
         ScaffoldCmd,
      ] = field(metadata={'subcommand': True})
