@@ -16,6 +16,15 @@ class DistroError(MilieuxError):
 class DistroExistsError(DistroError):
     """Error for when a distro already exists."""
 
+class NoSuchDistroError(DistroError):
+    """Error for when a distribution does not exist."""
+    def __init__(self, distro_name: str) -> None:
+        self.distro_name = distro_name
+        super().__init__(f'No distro named {distro_name!r}')
+
+class InvalidDistroError(DistroError):
+    """Error for when a distro is invalid."""
+
 class EnvError(MilieuxError):
     """Error related to an environment."""
 
@@ -27,12 +36,6 @@ class NoSuchEnvironmentError(EnvError):
     def __init__(self, env_name: str) -> None:
         self.env_name = env_name
         super().__init__(f'No environment named {env_name!r}')
-
-class NoSuchDistributionError(EnvError):
-    """Error for when a distribution does not exist."""
-    def __init__(self, distro_name: str) -> None:
-        self.distro_name = distro_name
-        super().__init__(f'No distribution named {distro_name!r}')
 
 class NoPackagesError(MilieuxError):
     """Error for when no packages are provided."""

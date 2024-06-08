@@ -5,10 +5,6 @@
 ## v0.1.0
 
 - Subcommands
-    - `distro`
-        - `lock`: lock dependencies for a distro
-            - default prints to stdout
-            - alternatively can save to a new distro with given name (by default, the original one, plus date)
     - `env`
         - `install`
             - handle distros
@@ -24,6 +20,7 @@ uv pip sync requirements.txt         -->
 
 ## v0.2.0
 
+- Editable installs
 - Some mechanism for "hooks" or "templates" to create arbitrary scaffold (file or directory tree) when creating a new environment, using jinja2 and variables like `ENV_NAME`, `ENV_DIR`.
     - Can pass a file/directory path to `env create`, or have separate command `env hook`
 - Subcommands

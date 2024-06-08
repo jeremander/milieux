@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from pathlib import Path
+from subprocess import CalledProcessError
 from typing import Annotated, Optional
 
 from loguru import logger
 from typing_extensions import Doc, Self
 
 from milieux.config import get_config
-from milieux.errors import DistroExistsError, NoPackagesError, NoSuchDistributionError, NoSuchRequirementsFileError
-from milieux.utils import ensure_path, eprint, read_lines
+from milieux.errors import DistroExistsError, InvalidDistroError, NoPackagesError, NoSuchDistroError, NoSuchRequirementsFileError
+from milieux.utils import ensure_path, eprint, read_lines, run_command
 
 
 def get_distro_base_dir() -> Path:
@@ -41,19 +42,40 @@ class Distro:
     def __init__(self, name: str, dir_path: Optional[Path] = None) -> None:
         self.name = name
         self.dir_path = dir_path or get_distro_base_dir()
+        self._path = self.dir_path / f'{name}.txt'
+
+    def exists(self) -> bool:
+        """Returns True if the distro exists."""
+        return self._path.exists()
 
     @property
     def path(self) -> Path:
         """Gets the path to the distro (requirements file).
-        If no such file exists, raises a NoSuchDistributionError."""
-        distro_path = self.dir_path / f'{self.name}.in'
-        if not distro_path.exists():
-            raise NoSuchDistributionError(self.name)
-        return distro_path
+        If no such file exists, raises a NoSuchDistroError."""
+        if not self.exists():
+            raise NoSuchDistroError(self.name)
+        return self._path
 
     def get_packages(self) -> list[str]:
         """Gets the list of packages in the distro."""
-        return read_lines(self.path)
+        packages = []
+        for line in read_lines(self.path):
+            line = line.strip()
+            if not line.startswith('#'):  # skip comments
+                packages.append(line)
+        return packages
+
+    def lock(self, annotate: bool = False) -> str:
+        """Locks the packages in a distro to their pinned versions.
+        Returns the output as a string."""
+        logger.info(f'Locking dependencies for {self.name!r} distro')
+        cmd = ['uv', 'pip', 'compile', str(self.path)]
+        if not annotate:
+            cmd.append('--no-annotate')
+        try:
+            return run_command(cmd, check=True, text=True, capture_output=True).stdout
+        except CalledProcessError as e:
+            raise InvalidDistroError('\n' + e.stderr) from e
 
     @classmethod
     def new(cls,
@@ -65,7 +87,7 @@ class Distro:
         """Creates a new distro."""
         packages = get_packages(packages, requirements)
         distro_base_dir = get_distro_base_dir()
-        distro_path = distro_base_dir / f'{name}.in'
+        distro_path = distro_base_dir / f'{name}.txt'
         if distro_path.exists():
             msg = f'Distro {name!r} already exists'
             if force:
@@ -78,6 +100,13 @@ class Distro:
                 print(pkg, file=f)
         logger.info(f'Wrote {name!r} requirements to {distro_path}')
         return cls(name, distro_base_dir)
+
+    def remove(self) -> None:
+        """Deletes the distro."""
+        path = self.path
+        logger.info(f'Deleting {self.name!r} distro')
+        path.unlink()
+        logger.info(f'Deleted {path}')
 
     def show(self) -> None:
         """Prints out the packages in the distro."""
@@ -92,7 +121,7 @@ class Distro:
         """Prints the list of existing distros."""
         distro_base_dir = get_distro_base_dir()
         print(f'Distro directory: {distro_base_dir}')
-        distros = [p.stem for p in distro_base_dir.glob('*') if p.is_file()]
+        distros = [p.stem for p in distro_base_dir.glob('*.txt') if p.is_file()]
         if distros:
             print('Distros:')
             print('\n'.join(f'    {p}' for p in distros))
