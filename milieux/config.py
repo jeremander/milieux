@@ -6,6 +6,7 @@ from fancy_dataclass import ConfigDataclass, TOMLDataclass
 from typing_extensions import Doc
 
 from milieux import PKG_NAME
+from milieux.errors import ConfigNotFoundError
 from milieux.utils import resolve_path
 
 
@@ -70,3 +71,11 @@ class Config(ConfigDataclass, TOMLDataclass):  # type: ignore[misc]
     def distro_dir_path(self) -> Path:
         """Gets the path to the distro directory."""
         return resolve_path(self.distro_dir, Path(self.base_dir))
+
+
+def get_config() -> Config:
+    """Gets the current configurations, raising a ConfigNotFoundError if there are none configured."""
+    cfg = Config.get_config()
+    if cfg is None:
+        raise ConfigNotFoundError('missing configurations')
+    return cfg

@@ -7,8 +7,13 @@
 - Subcommands
     - `distro`
         - `list`: list known distros
+        - `lock`: lock dependencies for a distro
+            - default prints to stdout
+            - alternatively can save to a new distro with given name (by default, the original one, plus date)
         - `show`: show packages associated with a distro
         - `new`: create a new distro
+            - name required
+            - provide packages and/or requirements files to aggregate
     - `env`
         - `install`
             - handle distros

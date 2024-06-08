@@ -108,7 +108,7 @@ class TestEnv:
         check_main(['env', 'install', '-n', 'fake_env', 'file://project1'], stderr="No environment named 'fake_env'", success=False)
         # install package into environment
         check_main(['env', 'install', '-n', 'myenv', 'file://project1'], stderr='file://project1')
-        env = Environment(tmp_config.env_dir_path, 'myenv')
+        env = Environment('myenv')
         def check_pkg(pkg_name: str, exists: bool) -> None:
             pkg_dir = env.site_packages_path / pkg_name
             if exists:

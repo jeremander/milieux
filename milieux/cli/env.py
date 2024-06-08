@@ -3,8 +3,7 @@ from typing import Any, Optional, Union
 
 from fancy_dataclass.cli import CLIDataclass
 
-from milieux.config import Config
-from milieux.env import EnvManager
+from milieux.env import Environment
 
 
 def _get_name_field(required: bool) -> Any:
@@ -17,14 +16,8 @@ _packages_field_help = 'list of packages to install into the environment (can op
 @dataclass
 class _EnvSubcommand(CLIDataclass):
 
-    def _run(self, manager: EnvManager) -> None:
-        raise NotImplementedError
-
     def run(self) -> None:
-        cfg = Config.get_config()
-        assert cfg is not None, 'missing configurations'
-        manager = EnvManager(config=cfg)
-        self._run(manager)
+        raise NotImplementedError
 
 
 @dataclass
@@ -38,9 +31,9 @@ class EnvActivate(EnvSubcommand, command_name='activate'):
     """Activate an environment."""
     name: Optional[str] = _get_name_field(required=True)
 
-    def _run(self, manager: EnvManager) -> None:
+    def run(self) -> None:
         name = self.name or input('Name of environment: ')
-        manager.activate(name)
+        Environment(name).activate()
 
 
 @dataclass
@@ -67,9 +60,9 @@ class EnvCreate(EnvSubcommand, command_name='create'):
         }
     )
 
-    def _run(self, manager: EnvManager) -> None:
+    def run(self) -> None:
         name = self.name or input('Name of environment: ')
-        manager.create(name, packages=self.packages, seed=self.seed, python=self.python, force=self.force)
+        Environment.create(name, packages=self.packages, seed=self.seed, python=self.python, force=self.force)
 
 
 @dataclass
@@ -77,8 +70,8 @@ class EnvFreeze(EnvSubcommand, command_name='freeze'):
     """List installed packages in an environment."""
     name: str = _get_name_field(required=True)
 
-    def _run(self, manager: EnvManager) -> None:
-        manager.freeze(self.name)
+    def run(self) -> None:
+        Environment(self.name).freeze()
 
 
 @dataclass
@@ -95,27 +88,27 @@ class EnvInstall(_EnvSubcommand, command_name='install'):
         metadata={'nargs': '+', 'args': ['-d', '--distros'], 'help': 'distro name(s) providing packages'}
     )
 
-    def _run(self, manager: EnvManager) -> None:
+    def run(self) -> None:
         assert self.name is not None
         # TODO: map distros to requirements files
-        manager.install(self.name, packages=self.packages, requirements=self.requirements)
+        Environment(self.name).install(packages=self.packages, requirements=self.requirements)
 
 
 @dataclass
 class EnvList(_EnvSubcommand, command_name='list'):
     """List all environments."""
 
-    def _run(self, manager: EnvManager) -> None:
-        manager.list()
+    def run(self) -> None:
+        Environment.list()
 
 
 @dataclass
 class EnvRemove(EnvSubcommand, command_name='remove'):
     """Remove an environment."""
 
-    def _run(self, manager: EnvManager) -> None:
+    def run(self) -> None:
         assert self.name is not None
-        manager.remove(self.name)
+        Environment(self.name).remove()
 
 
 @dataclass
@@ -124,8 +117,8 @@ class EnvShow(EnvSubcommand, command_name='show'):
     name: str = _get_name_field(required=True)
     list_packages: bool = field(default=False, metadata={'help': 'include list of installed packages'})
 
-    def _run(self, manager: EnvManager) -> None:
-        manager.show(self.name, list_packages=self.list_packages)
+    def run(self) -> None:
+        Environment(self.name).show(list_packages=self.list_packages)
 
 
 @dataclass
@@ -142,10 +135,10 @@ class EnvUninstall(_EnvSubcommand, command_name='uninstall'):
         metadata={'nargs': '+', 'args': ['-d', '--distros'], 'help': 'distro name(s) providing packages'}
     )
 
-    def _run(self, manager: EnvManager) -> None:
+    def run(self) -> None:
         assert self.name is not None
         # TODO: map distros to requirements files
-        manager.uninstall(self.name, packages=self.packages, requirements=self.requirements)
+        Environment(self.name).uninstall(packages=self.packages, requirements=self.requirements)
 
 
 @dataclass

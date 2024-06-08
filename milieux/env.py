@@ -10,19 +10,32 @@ import sys
 from typing import Annotated, Any, Optional
 
 from loguru import logger
-from typing_extensions import Doc
+from typing_extensions import Doc, Self
 
 from milieux import PROG
-from milieux.config import Config
+from milieux.config import get_config
 from milieux.errors import EnvError, EnvironmentExistsError, MilieuxError, NoPackagesError, NoSuchEnvironmentError
 from milieux.utils import run_command
+
+
+def get_env_base_dir() -> Path:
+    """Checks if the configured environment directory exists, and if not, creates it."""
+    cfg = get_config()
+    if not (path := cfg.env_dir_path).exists():
+        logger.info(f'mkdir -p {path}')
+        path.mkdir(parents=True)
+    return path
 
 
 @dataclass
 class Environment:
     """Class for interacting with a virtual environment."""
-    dir_path: Annotated[Path, Doc('Path to environment directory')]
     name: Annotated[str, Doc('Name of environment')]
+    dir_path: Annotated[Path, Doc('Path to environment directory')]
+
+    def __init__(self, name: str, dir_path: Optional[Path] = None) -> None:
+        self.name = name
+        self.dir_path = dir_path or get_env_base_dir()
 
     @property
     def env_path(self) -> Path:
@@ -71,41 +84,40 @@ class Environment:
         cmd_env = {**os.environ, 'VIRTUAL_ENV': str(self.env_path)}
         return run_command(cmd, env=cmd_env, **kwargs)
 
+    def get_installed_packages(self) -> list[str]:
+        """Gets a list of installed packages in the environment."""
+        cmd = ['uv', 'pip', 'freeze']
+        res = self.run_command(cmd, text=True, capture_output=True)
+        return res.stdout.splitlines()
 
-@dataclass
-class EnvManager:
-    """Class for managing virtual environments."""
-    config: Config
+    def get_info(self, list_packages: bool = False) -> dict[str, Any]:
+        """Gets details about the environment, as a JSON-compatible dict."""
+        path = self.env_path
+        created_at = datetime.fromtimestamp(path.stat().st_ctime).isoformat()
+        info: dict[str, Any] = {'name': self.name, 'path': str(path), 'created_at': created_at}
+        if list_packages:
+            info['packages'] = self.get_installed_packages()
+        return info
 
-    def ensure_env_dir(self) -> None:
-        """Checks if the environment directory exists, and if not, creates it."""
-        if not (path := self.config.env_dir_path).exists():
-            logger.info(f'mkdir -p {path}')
-            path.mkdir(parents=True)
-
-    def get_environment(self, name: str) -> Environment:
-        """Gets the Environment with the given name."""
-        return Environment(self.config.env_dir_path, name)
-
-    def _install_or_uninstall(self, install: bool, name: str, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None) -> None:
-        """Installs one or more packages into the given environment."""
+    def _install_or_uninstall(self, install: bool, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None) -> None:
+        """Installs one or more packages into the environment."""
         operation = 'install' if install else 'uninstall'
         if (not packages) and (not requirements):
             raise NoPackagesError(f'Must specify packages to {operation}')
         cmd = ['uv', 'pip', operation]
-        if install and (index_url := self.config.pip.index_url):
+        cfg = get_config()
+        if install and (index_url := cfg.pip.index_url):
             cmd.extend(['--index-url', index_url])
         # TODO: extra index URLs?
         if packages:
             cmd.extend(packages)
         if requirements:
             cmd.extend(['-r'] + requirements)
-        self.get_environment(name).run_command(cmd)
+        self.run_command(cmd)
 
-    def activate(self, name: str) -> None:
+    def activate(self) -> None:
         """Prints info about how to activate the environment."""
-        env = self.get_environment(name)
-        activate_path = env.activate_path
+        activate_path = self.activate_path
         if not activate_path.exists():
             raise FileNotFoundError(activate_path)
         # NOTE: no easy way to activate new shell and "source" a file in Python
@@ -116,23 +128,24 @@ class EnvManager:
         eprint('\nTo activate the environment, run the following shell command:\n')
         eprint(f'source {activate_path}')
         eprint('\nAlternatively, you can run (with backticks):\n')
-        eprint(f'`{PROG} env activate -n {name}`')
+        eprint(f'`{PROG} env activate -n {self.name}`')
         eprint('\nTo deactivate the environment, run:\n')
         eprint('deactivate\n')
 
-    def create(self,
+    @classmethod
+    def create(cls,
         name: str,
         packages: Optional[list[str]] = None,
         seed: bool = False,
         python: Optional[str] = None,
         force: bool = False,
-    ) -> None:
+    ) -> Self:
         """Creates a new environment
         Uses the version of Python currently on the user's PATH."""
         if packages:
             raise NotImplementedError
-        self.ensure_env_dir()
-        new_env_dir = self.config.env_dir_path / name
+        env_base_dir = get_env_base_dir()
+        new_env_dir = env_base_dir / name
         if new_env_dir.exists():
             msg = f'Environment {name!r} already exists'
             if force:
@@ -155,51 +168,43 @@ class EnvManager:
         # TODO: packages (call `install`?)
         lines = [line for line in res.stderr.splitlines() if not line.startswith('Activate')]
         logger.info('\n'.join(lines))
-        env = self.get_environment(name)
+        env = cls(name, env_base_dir)
         logger.info(f'Activate with either of these commands:\n\tsource {env.activate_path}\n\t{PROG} env activate {name}')
+        return env
 
-    def get_installed_packages(self, name: str) -> list[str]:
-        """Gets a list of installed packages in an environment."""
-        cmd = ['uv', 'pip', 'freeze']
-        res = self.get_environment(name).run_command(cmd, text=True, capture_output=True)
-        return res.stdout.splitlines()
-
-    def freeze(self, name: str) -> None:
-        """Prints out the packages currently installed in an environment."""
-        packages = self.get_installed_packages(name)
+    def freeze(self) -> None:
+        """Prints out the packages currently installed in the environment."""
+        packages = self.get_installed_packages()
         for pkg in packages:
             print(pkg)
 
-    def install(self, name: str, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None) -> None:
-        """Installs one or more packages into the given environment."""
-        self._install_or_uninstall(True, name, packages=packages, requirements=requirements)
+    def install(self, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None) -> None:
+        """Installs one or more packages into the environment."""
+        self._install_or_uninstall(True, packages=packages, requirements=requirements)
 
-    def remove(self, name: str) -> None:
-        """Deletes the environment with the given name."""
-        env_path = self.get_environment(name).env_path
-        logger.info(f'Deleting {name!r} environment')
+    def remove(self) -> None:
+        """Deletes the environment."""
+        env_path = self.env_path
+        logger.info(f'Deleting {self.name!r} environment')
         shutil.rmtree(env_path)
         logger.info(f'Deleted {env_path}')
 
-    def show(self, name: str, list_packages: bool = False) -> None:
-        """Shows details about a particular environment."""
-        path = self.get_environment(name).env_path
-        created_at = datetime.fromtimestamp(path.stat().st_ctime).isoformat()
-        d: dict[str, Any] = {'name': name, 'path': str(path), 'created_at': created_at}
-        if list_packages:
-            d['packages'] = self.get_installed_packages(name)
-        print(json.dumps(d, indent=2))
+    def show(self, list_packages: bool = False) -> None:
+        """Shows details about the environment."""
+        info = self.get_info(list_packages=list_packages)
+        print(json.dumps(info, indent=2))
 
-    def uninstall(self, name: str, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None) -> None:
-        """Uninstalls one or more packages from the given environment."""
-        self._install_or_uninstall(False, name, packages=packages, requirements=requirements)
+    def uninstall(self, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None) -> None:
+        """Uninstalls one or more packages from the environment."""
+        self._install_or_uninstall(False, packages=packages, requirements=requirements)
 
     # NOTE: due to a bug in mypy (https://github.com/python/mypy/issues/15047), this method must come last
-    def list(self) -> None:
+    @classmethod
+    def list(cls) -> None:
         """Prints the list of existing environments."""
-        env_dir = self.config.env_dir_path
-        print(f'Environment directory: {env_dir}')
-        envs = [p.name for p in env_dir.glob('*') if p.is_dir()]
+        env_base_dir = get_env_base_dir()
+        print(f'Environment directory: {env_base_dir}')
+        envs = [p.name for p in env_base_dir.glob('*') if p.is_dir()]
         if envs:
             print('Environments:')
             print('\n'.join(f'    {p}' for p in envs))
