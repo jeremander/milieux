@@ -7,10 +7,13 @@ from fancy_dataclass.cli import CLIDataclass
 from milieux.distro import Distro
 
 
-# @dataclass
-# class DisSubcommand(_EnvSubcommand):
-#     """Base class for environment subcommands."""
-#     name: Optional[str] = _get_name_field(required=True)
+@dataclass
+class DistroList(CLIDataclass, command_name='list'):
+    """List all distros."""
+
+    def run(self) -> None:
+        Distro.list()
+
 
 @dataclass
 class DistroNew(CLIDataclass, command_name='new'):
@@ -38,10 +41,19 @@ class DistroNew(CLIDataclass, command_name='new'):
 
 
 @dataclass
+class DistroShow(CLIDataclass, command_name='show'):
+    """Show the contents of a distro."""
+    name: str = field(metadata={'help': 'name of distro'})
+
+    def run(self) -> None:
+        Distro(self.name).show()
+
+
+@dataclass
 class DistroCmd(CLIDataclass, command_name='distro'):
     """Manage distros."""
-
     subcommand: Union[
+        DistroList,
         DistroNew,
-        # DistroList,
+        DistroShow,
     ] = field(metadata={'subcommand': True})

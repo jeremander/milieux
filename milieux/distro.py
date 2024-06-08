@@ -7,7 +7,7 @@ from typing_extensions import Doc, Self
 
 from milieux.config import get_config
 from milieux.errors import DistroExistsError, NoPackagesError, NoSuchDistributionError, NoSuchRequirementsFileError
-from milieux.utils import ensure_path, read_lines
+from milieux.utils import ensure_path, eprint, read_lines
 
 
 def get_distro_base_dir() -> Path:
@@ -51,6 +51,10 @@ class Distro:
             raise NoSuchDistributionError(self.name)
         return distro_path
 
+    def get_packages(self) -> list[str]:
+        """Gets the list of packages in the distro."""
+        return read_lines(self.path)
+
     @classmethod
     def new(cls,
         name: str,
@@ -75,13 +79,20 @@ class Distro:
         logger.info(f'Wrote {name!r} requirements to {distro_path}')
         return cls(name, distro_base_dir)
 
+    def show(self) -> None:
+        """Prints out the packages in the distro."""
+        eprint(f'Distro {self.name!r} is located at: {self.path}')
+        eprint('Packages:\n')
+        for pkg in self.get_packages():
+            print(pkg)
+
     # NOTE: due to a bug in mypy (https://github.com/python/mypy/issues/15047), this method must come last
     @classmethod
     def list(cls) -> None:
         """Prints the list of existing distros."""
         distro_base_dir = get_distro_base_dir()
         print(f'Distro directory: {distro_base_dir}')
-        distros = [p.stem for p in distro_base_dir.glob('*') if p.is_dir()]
+        distros = [p.stem for p in distro_base_dir.glob('*') if p.is_file()]
         if distros:
             print('Distros:')
             print('\n'.join(f'    {p}' for p in distros))

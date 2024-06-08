@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import shlex
 import subprocess
+import sys
 from typing import Any
 
 from loguru import logger
@@ -41,3 +42,7 @@ def ensure_path(path: Path) -> Path:
 def read_lines(path: Path) -> list[str]:
     """Reads lines of text from a file."""
     return path.read_text().splitlines()
+
+def eprint(s: str, **kwargs: Any) -> None:
+    """Prints a string to stderr."""
+    print(s, file=sys.stderr, **kwargs)

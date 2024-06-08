@@ -6,8 +6,6 @@
 
 - Subcommands
     - `distro`
-        - `show`: show packages associated with a distro (just print out contents)
-        - `list`: list known distros
         - `lock`: lock dependencies for a distro
             - default prints to stdout
             - alternatively can save to a new distro with given name (by default, the original one, plus date)

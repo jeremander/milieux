@@ -64,19 +64,24 @@ class TestConfig:
 class TestDistro:
 
     def _check_distro(self, distro_path, packages):
+        name = distro_path.stem
         lines = read_lines(distro_path)
         assert lines == packages
+        # check that 'show' command prints out the packages
+        check_main(['distro', 'show', name], stderr=f'Distro {name!r} is located at: {distro_path}', stdout=packages)
 
     def test_distro(self, monkeypatch, tmp_config):
         projects_path = tmp_config.base_dir_path / 'projects'
         projects_path.mkdir()
         monkeypatch.chdir(projects_path)
         assert not tmp_config.distro_dir_path.exists()
-        # TODO: list all distros
-        # TODO: show nonexistent environment
         def get_distro_path(name: str) -> Path:
             return Path(tmp_config.distro_dir_path / f'{name}.in')
         name = 'mydist'
+        # list all distros
+        check_main(['distro', 'list'], stdout='No distros exist')
+        # show nonexistent distro
+        check_main(['distro', 'show', name], stderr=f'No distribution named {name!r}', success=False)
         # create distro with no packages
         check_main(['distro', 'new', name], stderr='Must specify at least one package', success=False)
         assert not get_distro_path(name).exists()
@@ -85,6 +90,8 @@ class TestDistro:
         distro_path = get_distro_path(name)
         assert distro_path.exists()
         self._check_distro(distro_path, ['pkg1', 'pkg2'])
+        # list all distros
+        check_main(['distro', 'list'], stdout=['Distros:', r'\s+mydist'])
         # write same distro without -f flag
         check_main(['distro', 'new', name, '--packages', 'pkg1'], stderr=f'Distro {name!r} already exists', success=False)
         # create distro with requirements file
@@ -118,7 +125,7 @@ class TestDistro:
         # try to create environment with invalid Python executable
         check_main(['env', 'new', '-n', 'fake_env', '--python', 'fake-python'], stderr='executable `fake-python` not found', success=False)
         # list all environments
-        check_main(['env', 'list'], stdout=r'Environments:\s+myenv')
+        check_main(['env', 'list'], stdout=['Environments:', r'\s+myenv'])
         # show single environment
         d = {'name': 'myenv', 'path': str(env_dir), 'created_at': datetime.fromtimestamp(env_dir.stat().st_ctime).isoformat()}
         check_main(['env', 'show', '-n', 'myenv'], stdout=json.dumps(d, indent=2))

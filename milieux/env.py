@@ -6,7 +6,6 @@ from pathlib import Path
 import re
 import shutil
 from subprocess import CalledProcessError, CompletedProcess
-import sys
 from typing import Annotated, Any, Optional
 
 from loguru import logger
@@ -15,7 +14,7 @@ from typing_extensions import Doc, Self
 from milieux import PROG
 from milieux.config import get_config
 from milieux.errors import EnvError, EnvironmentExistsError, MilieuxError, NoPackagesError, NoSuchEnvironmentError
-from milieux.utils import ensure_path, run_command
+from milieux.utils import ensure_path, eprint, run_command
 
 
 def get_env_base_dir() -> Path:
@@ -119,8 +118,6 @@ class Environment:
             raise FileNotFoundError(activate_path)
         # NOTE: no easy way to activate new shell and "source" a file in Python
         # instead, we just print out the command
-        def eprint(s: str) -> None:
-            print(s, file=sys.stderr)
         print(f'source {activate_path}')
         eprint('\nTo activate the environment, run the following shell command:\n')
         eprint(f'source {activate_path}')
