@@ -57,7 +57,7 @@ class MilieuxCLI(CLIDataclass):
     def _handle_subcommand_error(self, exc: BaseException) -> None:
         if isinstance(exc, MilieuxError):  # expected error: just show the message
             msg = str(exc)
-        elif isinstance(exc, KeyboardInterrupt):
+        elif isinstance(exc, (EOFError, KeyboardInterrupt)):  # interrupted user input
             msg = ''
         else:  # unexpected error: show full traceback
             lines = traceback.format_exception(type(exc), exc, exc.__traceback__)

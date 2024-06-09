@@ -97,11 +97,18 @@ class Environment:
             info['packages'] = self.get_installed_packages()
         return info
 
-    def _install_or_uninstall_cmd(self, install: bool, packages: Optional[list[str]] = None, requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[list[str]] = None) -> list[str]:
+    def _install_or_uninstall_cmd(
+        self,
+        install: bool,
+        packages: Optional[list[str]] = None,
+        requirements: Optional[Sequence[AnyPath]] = None,
+        distros: Optional[list[str]] = None,
+        editable: Optional[str] = None,
+    ) -> list[str]:
         """Installs one or more packages into the environment."""
         operation = 'install' if install else 'uninstall'
         reqs = get_requirements(requirements, distros)
-        if (not packages) and (not requirements):
+        if (not editable) and (not packages) and (not requirements):
             raise NoPackagesError(f'Must specify packages to {operation}')
         cmd = ['uv', 'pip', operation]
         cfg = get_config()
@@ -125,7 +132,7 @@ class Environment:
         eprint('\nTo activate the environment, run the following shell command:\n')
         eprint(f'source {activate_path}')
         eprint('\nAlternatively, you can run (with backticks):\n')
-        eprint(f'`{PROG} env activate -n {self.name}`')
+        eprint(f'`{PROG} env activate {self.name}`')
         eprint('\nTo deactivate the environment, run:\n')
         eprint('deactivate\n')
 
@@ -178,13 +185,16 @@ class Environment:
         requirements: Optional[Sequence[AnyPath]] = None,
         distros: Optional[list[str]] = None,
         upgrade: bool = False,
+        editable: Optional[str] = None,
     ) -> None:
         """Installs one or more packages into the environment."""
         _ = self.env_path  # ensure environment exists
         logger.info(f'Installing dependencies into {self.name!r} environment')
-        cmd = self._install_or_uninstall_cmd(True, packages=packages, requirements=requirements, distros=distros)
+        cmd = self._install_or_uninstall_cmd(True, packages=packages, requirements=requirements, distros=distros, editable=editable)
         if upgrade:
             cmd.append('--upgrade')
+        if editable:
+            cmd += ['--editable', editable]
         self.run_command(cmd)
 
     def remove(self) -> None:

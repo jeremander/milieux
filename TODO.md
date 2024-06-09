@@ -4,7 +4,6 @@
 
 ## v0.2.0
 
-- Editable installs
 - Some mechanism for "hooks" or "templates" to create arbitrary scaffold (file or directory tree) when creating a new environment, using `jinja2` and variables like `ENV_NAME`, `ENV_DIR`.
     - Can pass a file/directory path to `env create`, or have separate command `env hook`
 - Subcommands
@@ -12,21 +11,14 @@
         - Build `sdist` or `wheel`
         - Should it be a single project or an entire distribution?
     - `publish`
-        - publish to PyPI (actual or local)
+        - Publish to PyPI (actual or local)
+    - `scaffold`
+        - Add `poetry` utility
 
 ## v0.3.0
 
 - Switch to `rich` for prompts, tables, etc.
-- Gracefully catch `KeyboardInterrupt` in prompts
 - Quiet/verbose mode for `uv` subcommands
-- "Recipes" (in README)
-    - create dev environment
-    - activate/use dev environment (including someone else's)
-    - build full distro (configure PyPI mirror first)
-        - include module file for end users
-    - create a new distro (optionally, atop a base distro)
-    - run tests for a whole distro
-    - get source metrics for a whole distro
 
 ## Future
 
@@ -44,11 +36,21 @@
         - `list`
             - Perhaps display owner and creation time (human-readable)
     - `test`
-        - run `pytest` on all projects in a distro
+        - Run `pytest` on all projects in a distro
     - `metrics`
-        - compute source metrics for a distro
+        - Compute source metrics for a distro
+    - `deps`
+        - Analyze dependency graph
     - `docs`
         - `sphinx` or `mkdocs`
         - Build a single site, or multiple sites for each project
     - `scaffold`
         - Use `poetry`, `cookiecutter`, etc.
+- "Recipes" (in README)
+    - create dev environment
+    - activate/use dev environment (including someone else's)
+    - build full distro (configure PyPI mirror first)
+        - include module file for end users
+    - create a new distro (optionally, atop a base distro)
+    - run tests for a whole distro
+    - get source metrics for a whole distro

@@ -69,10 +69,14 @@ class EnvInstall(_EnvSubcommand, command_name='install'):
     requirements: list[str] = _requirements_field
     distros: list[str] = _distros_field
     upgrade: bool = field(default=False, metadata={'help': 'allow package upgrades'})
+    editable: Optional[str] = field(
+        default=None,
+        metadata={'args': ['-e', '--editable'], 'help': 'do an editable install of a single local file'}
+    )
 
     def run(self) -> None:
         assert self.name is not None
-        Environment(self.name).install(packages=self.packages, requirements=self.requirements, distros=self.distros, upgrade=self.upgrade)
+        Environment(self.name).install(packages=self.packages, requirements=self.requirements, distros=self.distros, upgrade=self.upgrade, editable=self.editable)
 
 
 @dataclass

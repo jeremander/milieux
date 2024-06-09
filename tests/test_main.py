@@ -28,14 +28,21 @@ def test_subcommand_help():
         cmd_name = subcmd.__settings__.command_name
         check_main([cmd_name, '--help'], stdout=[cmd_name, '--help'])
 
-def check_package(env: Environment, pkg_name: str, exists: bool) -> None:
-    pkg_dir = env.site_packages_path / pkg_name
+def check_package(env: Environment, pkg_name: str, exists: bool, editable: bool = False) -> None:
+    glob = env.site_packages_path.glob(f'{pkg_name}*.dist-info' if editable else pkg_name)
+    pkg_dirs = [p for p in glob if p.is_dir()]
     if exists:
-        assert pkg_dir.exists()
-        init_py = pkg_dir / '__init__.py'
-        assert init_py.exists()
+        assert len(pkg_dirs) == 1
+        if not editable:
+            init_py = pkg_dirs[0] / '__init__.py'
+            assert init_py.exists()
     else:
-        assert not pkg_dir.exists()
+        assert not pkg_dirs
+
+def get_module_path(env: Environment, pkg_name: str) -> str:
+    python_exec = env.bin_path / 'python'
+    cmd = [str(python_exec), '-c', f'import {pkg_name}; print({pkg_name}.__file__)']
+    return subprocess.check_output(cmd, text=True)
 
 
 ##########
@@ -229,28 +236,47 @@ class TestEnv:
         check_main(['env', 'install', 'fake_env', '-p', 'file://project1'], stderr="No environment named 'fake_env'", success=False)
         # install package into environment
         check_main(['env', 'install', 'myenv', '-p', 'file://project1'], stderr=["Installing dependencies into 'myenv' environment", 'file://project1'])
-        env = Environment('myenv')
+        name = 'myenv'
+        env = Environment(name)
         check_package(env, 'project1', True)
         check_package(env, 'project2', False)
+        # check module path is within environment (regular file install)
+        module_path = get_module_path(env, 'project1')
+        assert module_path.startswith(str(env.dir_path))
+        assert not module_path.startswith(str(projects_path.resolve()))
         # install requirements file into environment
         reqs_path = projects_path / 'reqs.txt'
         with open(reqs_path, 'w') as f:
             print('file://project2', file=f)
-        check_main(['env', 'install', 'myenv', '-r', str(reqs_path)], stderr=f'-r {reqs_path}')
+        check_main(['env', 'install', name, '-r', str(reqs_path)], stderr=f'-r {reqs_path}')
         check_package(env, 'project1', True)
         check_package(env, 'project2', True)
         # print out packages in environment
-        check_main(['env', 'freeze', 'myenv'], stdout='project1 @ file:///.+project2 @ file:///')
-        check_main(['env', 'show', 'myenv', '--list-packages'], stdout=r'"name": "myenv".+"packages": \[\s*"project1 @ file:///')
-        # uninstall package
-        check_main(['env', 'uninstall', 'myenv', '-p', 'project1'], stderr=["Uninstalling dependencies from 'myenv' environment", 'project1'])
-        check_package(env, 'project1', False)
+        check_main(['env', 'freeze', name], stdout='project1 @ file:///.+project2 @ file:///')
+        check_main(['env', 'show', name, '--list-packages'], stdout=r'"name": "myenv".+"packages": \[\s*"project1 @ file:///')
+        # test editable install (overwrite projects)
+        # install a single editable package directly
+        check_main(['env', 'install', name, '-e', 'project1'])
+        check_package(env, 'project1', True, editable=True)
         check_package(env, 'project2', True)
-        check_main(['env', 'uninstall', 'myenv', '-r', str(reqs_path)], stderr=f'-r {reqs_path}')
+        module_path = get_module_path(env, 'project1')
+        assert module_path.startswith(str((projects_path / 'project1').resolve()))
+        assert not module_path.startswith(str(env.dir_path))
+        # use -e flag within a requirements file
+        with open(reqs_path, 'w') as f:
+            print('-e file://project2', file=f)
+        check_main(['env', 'install', name, '-r', str(reqs_path)])
+        check_package(env, 'project1', True, editable=True)
+        check_package(env, 'project2', True, editable=True)
+        # uninstall package
+        check_main(['env', 'uninstall', name, '-p', 'project1'], stderr=["Uninstalling dependencies from 'myenv' environment", 'project1'])
+        check_package(env, 'project1', False)
+        check_package(env, 'project2', True, editable=True)
+        check_main(['env', 'uninstall', name, '-r', str(reqs_path)], stderr=f'-r {reqs_path}')
         check_package(env, 'project1', False)
         check_package(env, 'project2', False)
         # uninstall nonexistent package
-        check_main(['env', 'uninstall', 'myenv', '-p', 'project3'], stderr='project3', success=False)
+        check_main(['env', 'uninstall', name, '-p', 'project3'], stderr='project3', success=False)
 
     def test_sync(self, monkeypatch, tmp_config):
         # create two local packages, for test installations

@@ -135,7 +135,7 @@ However, you can also activate the environment directly by calling the command w
 `milieux env activate my_env`
 ```
 
-This will source the activation script associated with the `my_env` virtual environment.
+This will source the activation script associated with the `my_env` virtual environment. To deactivate the environment, run `deactivate`.
 
 #### Install packages
 
