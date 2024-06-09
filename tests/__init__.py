@@ -2,13 +2,16 @@ from contextlib import contextmanager, nullcontext, redirect_stderr, redirect_st
 from io import StringIO
 import re
 import sys
-from typing import Annotated, Callable, Optional
+from typing import Annotated, Callable, Optional, Union
 from unittest.mock import patch
 
 import loguru
 from typing_extensions import Doc
 
 from milieux.cli.main import MilieuxCLI
+
+
+Args = Union[str, list[str]]
 
 
 @contextmanager
@@ -30,9 +33,9 @@ def patch_stdin(content):
 
 def check_main(
     args: Annotated[list[str], Doc('list of arguments to main program')],
-    stdin: Annotated[Optional[str | list[str]], Doc('user inputs for interactive prompts')] = None,
-    stdout: Annotated[Optional[str | list[str]], Doc('expected stdout (regular expression)')] = None,
-    stderr: Annotated[Optional[str | list[str]], Doc('expected stderr (regular expression)')] = None,
+    stdin: Annotated[Optional[Args], Doc('user inputs for interactive prompts')] = None,
+    stdout: Annotated[Optional[Args], Doc('expected stdout (regular expression)')] = None,
+    stderr: Annotated[Optional[Args], Doc('expected stderr (regular expression)')] = None,
     success: Annotated[bool, Doc('whether we expect success')] = True,
 ) -> None:
     """Generic test harness for running the main CLI program."""
@@ -54,7 +57,7 @@ def check_main(
             assert success == (e.code == 0)  # noqa: PT017
         finally:
             loguru.logger.remove(sink_id)
-        flags = re.MULTILINE | re.DOTALL
+        flags = re.MULTILINE | re.DOTALL  # novermin
         if stdout is not None:
             assert sio_out is not None
             for s in stdout:

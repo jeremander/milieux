@@ -4,12 +4,12 @@ from pathlib import Path
 import shlex
 import subprocess
 import sys
-from typing import Any
+from typing import Any, Union
 
 from loguru import logger
 
 
-AnyPath = str | Path
+AnyPath = Union[str, Path]
 
 
 def run_command(cmd: list[Any], **kwargs: Any) -> subprocess.CompletedProcess[str]:

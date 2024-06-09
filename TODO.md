@@ -4,14 +4,12 @@
 
 ## v0.1.0
 
-- Github Actions
-- Coverage badge
 - Build/publish
 
 ## v0.2.0
 
 - Editable installs
-- Some mechanism for "hooks" or "templates" to create arbitrary scaffold (file or directory tree) when creating a new environment, using jinja2 and variables like `ENV_NAME`, `ENV_DIR`.
+- Some mechanism for "hooks" or "templates" to create arbitrary scaffold (file or directory tree) when creating a new environment, using `jinja2` and variables like `ENV_NAME`, `ENV_DIR`.
     - Can pass a file/directory path to `env create`, or have separate command `env hook`
 - Subcommands
     - `build`
@@ -45,8 +43,7 @@
                 - Once viewed, prompts whether to use
     - `env`
         - `create`
-            - Option to specify a base environment (via `uv pip freeze`)
-            - Or "stock" environments (testing, linting, etc.) with names
+            - "Stock" environments (testing, linting, etc.) with names
                 - can roll current `--seed` into this (e.g. `--seed default`)
         - `list`
             - Perhaps display owner and creation time (human-readable)

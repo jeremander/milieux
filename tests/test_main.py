@@ -172,6 +172,8 @@ class TestDistro:
         self._check_distro(distro.path, ['file://project1'])
         # save a new distro (uses a date suffix)
         check_main(['distro', 'lock', name, '--new'], stderr=r"Wrote 'mydist.\d{8}' requirements to")
+        # attempt to save distro to an existing one
+        check_main(['distro', 'lock', name, '--new', name], stderr=f'Distro {name!r} already exists', success=False)
         # use nonexistent local package
         check_main(['distro', 'new', name, '--packages', 'file://project2', '-f'], stderr=f'Wrote {name!r} requirements')
         check_main(['distro', 'lock', name], stderr='No such file or directory', success=False)

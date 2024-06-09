@@ -5,6 +5,7 @@ from typing import Any, Optional, Union
 from fancy_dataclass.cli import CLIDataclass
 
 from milieux.distro import Distro
+from milieux.errors import DistroExistsError
 
 
 def _get_name_field(required: bool) -> Any:
@@ -41,15 +42,21 @@ class DistroLock(CLIDataclass, command_name='lock'):
 
     def run(self) -> None:
         distro = Distro(self.name)
-        output = distro.lock(annotate=self.annotate)
-        if self.new is None:  # print new file to stdout
-            print(output)
+        if self.new is None:
+            new_name = None
         else:
             if self.new == '':
                 now = datetime.now()
                 new_name = self.name + '.' + now.strftime('%Y%m%d')
             else:
                 new_name = self.new
+            if (not self.force) and Distro(new_name).exists():
+                raise DistroExistsError(f'Distro {new_name!r} already exists')
+        output = distro.lock(annotate=self.annotate)
+        if self.new is None:  # print new file to stdout
+            print(output)
+        else:
+            assert new_name is not None
             Distro.new(new_name, packages=output.splitlines(), force=self.force)
 
 

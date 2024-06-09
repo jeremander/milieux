@@ -44,7 +44,7 @@ milieux -h
 
 View subcommand help menu:
 
-```shell
+```text
 milieux <SUBCOMMAND> -h
 ```
 
@@ -85,7 +85,12 @@ Locking dependencies can ensure reproducibility of environments (someone else ca
 ```shell
 $ milieux distro lock scientific --new scientific.20240609
 
+Locking dependencies for 'scientific' distro
+...
+Creating distro 'scientific.20240609'
+
 $ milieux distro show scientific.20240609
+
 ...
 numpy==1.26.4
 pandas==2.2.2

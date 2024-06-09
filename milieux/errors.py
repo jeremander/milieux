@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Union
 
 
 class MilieuxError(ValueError):
@@ -42,6 +43,6 @@ class NoPackagesError(MilieuxError):
 
 class NoSuchRequirementsFileError(MilieuxError):
     """Error for when a requirements file does not exist."""
-    def __init__(self, reqs_path: Path | str) -> None:
+    def __init__(self, reqs_path: Union[str, Path]) -> None:
         self.reqs_path = reqs_path
         super().__init__(f'No requirements file: {reqs_path}')
