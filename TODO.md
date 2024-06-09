@@ -6,8 +6,7 @@
 
 - Subcommands
     - `env`
-        - `new`
-            - packages
+        - make `name` positional
         - `sync`: sync all deps from a distro (first compile)
 <!-- # Identify all transitive dependencies and create requirements.txt
 uv pip compile requirements.in --quiet --output-file requirements.txt

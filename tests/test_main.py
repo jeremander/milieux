@@ -185,7 +185,7 @@ class TestEnv:
         # attempt to install into nonexistent environment
         check_main(['env', 'install', '-n', 'fake_env', 'file://project1'], stderr="No environment named 'fake_env'", success=False)
         # install package into environment
-        check_main(['env', 'install', '-n', 'myenv', 'file://project1'], stderr='file://project1')
+        check_main(['env', 'install', '-n', 'myenv', 'file://project1'], stderr=["Installing dependencies into 'myenv' environment", 'file://project1'])
         env = Environment('myenv')
         def check_pkg(pkg_name: str, exists: bool) -> None:
             pkg_dir = env.site_packages_path / pkg_name
@@ -208,7 +208,7 @@ class TestEnv:
         check_main(['env', 'freeze', '-n', 'myenv'], stdout='project1 @ file:///.+project2 @ file:///')
         check_main(['env', 'show', '-n', 'myenv', '--list-packages'], stdout=r'"name": "myenv".+"packages": \[\s*"project1 @ file:///')
         # uninstall package
-        check_main(['env', 'uninstall', '-n', 'myenv', 'project1'], stderr='project1')
+        check_main(['env', 'uninstall', '-n', 'myenv', 'project1'], stderr=["Uninstalling dependencies from 'myenv' environment", 'project1'])
         check_pkg('project1', False)
         check_pkg('project2', True)
         check_main(['env', 'uninstall', '-n', 'myenv', '-r', str(reqs_path)], stderr=f'-r {reqs_path}')

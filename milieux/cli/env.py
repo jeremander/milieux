@@ -12,6 +12,11 @@ def _get_name_field(required: bool) -> Any:
 
 _packages_field_help = 'list of packages to install into the environment (can optionally include constraints, e.g. "numpy>=1.25")'
 
+_requirements_field: Any = field(
+    default_factory=list,
+    metadata={'nargs': '+', 'args': ['-r', '--requirements'], 'help': 'requirements file(s) listing packages'}
+)
+
 _distros_field: Any = field(
     default_factory=list,
     metadata={'nargs': '+', 'args': ['-d', '--distros'], 'help': 'distro name(s) providing packages'}
@@ -55,10 +60,7 @@ class EnvInstall(_EnvSubcommand, command_name='install'):
     """Install packages into an environment."""
     packages: list[str] = field(metadata={'help': _packages_field_help})
     name: Optional[str] = _get_name_field(required=True)
-    requirements: list[str] = field(
-        default_factory=list,
-        metadata={'nargs': '+', 'args': ['-r', '--requirements'], 'help': 'requirements file(s) listing packages'}
-    )
+    requirements: list[str] = _requirements_field
     distros: list[str] = _distros_field
 
     def run(self) -> None:
@@ -119,14 +121,31 @@ class EnvShow(EnvSubcommand, command_name='show'):
 
 
 @dataclass
+class EnvSync(_EnvSubcommand, command_name='sync'):
+    """Sync dependencies for an environment.
+
+    NOTE: it is often a good idea to sync from a set of *locked* dependencies (run `milieux distro lock` to create one)."""
+    name: Optional[str] = _get_name_field(required=True)
+    requirements: list[str] = _requirements_field
+    distros: list[str] = _distros_field
+
+    @classmethod
+    def parser_description_brief(cls) -> Optional[str]:
+        doc = cls.__doc__
+        assert isinstance(doc, str)
+        return doc.splitlines()[0].lower()[:-1]
+
+    def run(self) -> None:
+        assert self.name is not None
+        Environment(self.name).sync(requirements=self.requirements, distros=self.distros)
+
+
+@dataclass
 class EnvUninstall(_EnvSubcommand, command_name='uninstall'):
     """Uninstall packages from an environment."""
     packages: list[str] = field(metadata={'help': _packages_field_help})
     name: Optional[str] = _get_name_field(required=True)
-    requirements: list[str] = field(
-        default_factory=list,
-        metadata={'nargs': '+', 'args': ['-r', '--requirements'], 'help': 'requirements file(s) listing packages'}
-    )
+    requirements: list[str] = _requirements_field
     distros: list[str] = _distros_field
 
     def run(self) -> None:
@@ -146,5 +165,6 @@ class EnvCmd(CLIDataclass, command_name='env'):
         EnvNew,
         EnvRemove,
         EnvShow,
+        EnvSync,
         EnvUninstall,
     ] = field(metadata={'subcommand': True})

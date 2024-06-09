@@ -20,7 +20,7 @@ from milieux.errors import MilieuxError
 @dataclass
 class MilieuxCLI(CLIDataclass):
     """Tool to assist in developing, building, and installing Python packages."""
-
+    # TODO: use RawDescriptionHelpFormatter, once CLIDataclass supports that
     subcommand: Union[
         ConfigCmd,
         DistroCmd,

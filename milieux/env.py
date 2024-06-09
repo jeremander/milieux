@@ -96,12 +96,17 @@ class Environment:
             info['packages'] = self.get_installed_packages()
         return info
 
-    def _install_or_uninstall(self, install: bool, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None, distros: Optional[list[str]] = None) -> None:
-        """Installs one or more packages into the environment."""
-        operation = 'install' if install else 'uninstall'
+    def _get_requirements(self, requirements: Optional[list[str]] = None, distros: Optional[list[str]] = None) -> list[str]:
+        """Helper function to get requirements files, given a list of requirements files and/or distro names."""
         requirements = requirements or []
         if distros:  # get requirements path from distro name
             requirements += [str(Distro(name).path) for name in distros]
+        return requirements
+
+    def _install_or_uninstall(self, install: bool, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None, distros: Optional[list[str]] = None) -> None:
+        """Installs one or more packages into the environment."""
+        operation = 'install' if install else 'uninstall'
+        requirements = self._get_requirements(requirements, distros)
         if (not packages) and (not requirements):
             raise NoPackagesError(f'Must specify packages to {operation}')
         cmd = ['uv', 'pip', operation]
@@ -174,6 +179,7 @@ class Environment:
 
     def install(self, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None, distros: Optional[list[str]] = None) -> None:
         """Installs one or more packages into the environment."""
+        logger.info(f'Installing dependencies into {self.name!r} environment')
         self._install_or_uninstall(True, packages=packages, requirements=requirements, distros=distros)
 
     def remove(self) -> None:
@@ -188,8 +194,19 @@ class Environment:
         info = self.get_info(list_packages=list_packages)
         print(json.dumps(info, indent=2))
 
+    def sync(self, requirements: Optional[list[str]] = None, distros: Optional[list[str]] = None) -> None:
+        """Syncs dependencies in a distro or requirements files to the environment.
+        NOTE: unlike 'install', this ensures the environment exactly matches the dependencies afterward."""
+        requirements = self._get_requirements(requirements, distros)
+        if not requirements:
+            raise NoPackagesError('Must specify dependencies to sync')
+        logger.info(f'Syncing dependencies in {self.name!r} environment')
+        cmd = ['uv', 'pip', 'sync'] + requirements
+        self.run_command(cmd)
+
     def uninstall(self, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None, distros: Optional[list[str]] = None) -> None:
         """Uninstalls one or more packages from the environment."""
+        logger.info(f'Uninstalling dependencies from {self.name!r} environment')
         self._install_or_uninstall(False, packages=packages, requirements=requirements, distros=distros)
 
     # NOTE: due to a bug in mypy (https://github.com/python/mypy/issues/15047), this method must come last
