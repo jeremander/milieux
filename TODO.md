@@ -4,7 +4,9 @@
 
 ## v0.1.0
 
-- Rudimentary `README`
+- Github Actions
+- Coverage badge
+- Build/publish
 
 ## v0.2.0
 
