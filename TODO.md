@@ -6,8 +6,6 @@
 
 - Subcommands
     - `env`
-        - `install`
-            - handle distros
         - `new`
             - packages
         - `sync`: sync all deps from a distro (first compile)
@@ -16,7 +14,8 @@ uv pip compile requirements.in --quiet --output-file requirements.txt
 
 # Update environment to match requirements.txt
 uv pip sync requirements.txt         -->
-- Write `README`
+- Take `-c`/`--config` argument at top-level (before subcommands) to specify a config file
+- Rudimentary `README`
 
 ## v0.2.0
 

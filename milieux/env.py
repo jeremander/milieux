@@ -13,6 +13,7 @@ from typing_extensions import Doc, Self
 
 from milieux import PROG
 from milieux.config import get_config
+from milieux.distro import Distro
 from milieux.errors import EnvError, EnvironmentExistsError, MilieuxError, NoPackagesError, NoSuchEnvironmentError
 from milieux.utils import ensure_path, eprint, run_command
 
@@ -95,9 +96,12 @@ class Environment:
             info['packages'] = self.get_installed_packages()
         return info
 
-    def _install_or_uninstall(self, install: bool, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None) -> None:
+    def _install_or_uninstall(self, install: bool, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None, distros: Optional[list[str]] = None) -> None:
         """Installs one or more packages into the environment."""
         operation = 'install' if install else 'uninstall'
+        requirements = requirements or []
+        if distros:  # get requirements path from distro name
+            requirements += [str(Distro(name).path) for name in distros]
         if (not packages) and (not requirements):
             raise NoPackagesError(f'Must specify packages to {operation}')
         cmd = ['uv', 'pip', operation]
@@ -172,9 +176,9 @@ class Environment:
         for pkg in packages:
             print(pkg)
 
-    def install(self, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None) -> None:
+    def install(self, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None, distros: Optional[list[str]] = None) -> None:
         """Installs one or more packages into the environment."""
-        self._install_or_uninstall(True, packages=packages, requirements=requirements)
+        self._install_or_uninstall(True, packages=packages, requirements=requirements, distros=distros)
 
     def remove(self) -> None:
         """Deletes the environment."""
@@ -188,9 +192,9 @@ class Environment:
         info = self.get_info(list_packages=list_packages)
         print(json.dumps(info, indent=2))
 
-    def uninstall(self, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None) -> None:
+    def uninstall(self, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None, distros: Optional[list[str]] = None) -> None:
         """Uninstalls one or more packages from the environment."""
-        self._install_or_uninstall(False, packages=packages, requirements=requirements)
+        self._install_or_uninstall(False, packages=packages, requirements=requirements, distros=distros)
 
     # NOTE: due to a bug in mypy (https://github.com/python/mypy/issues/15047), this method must come last
     @classmethod

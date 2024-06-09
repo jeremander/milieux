@@ -27,7 +27,7 @@ def resolve_path(path: str, base_dir: Path) -> Path:
             return p
         raise FileNotFoundError(path)
     if first_part == '..':
-        return resolve_path(str(p.resolve()), base_dir)
+        return base_dir.parent / '/'.join(p.parts[1:])
     # otherwise, a relative path
     return base_dir / path
 

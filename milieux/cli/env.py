@@ -12,6 +12,11 @@ def _get_name_field(required: bool) -> Any:
 
 _packages_field_help = 'list of packages to install into the environment (can optionally include constraints, e.g. "numpy>=1.25")'
 
+_distros_field: Any = field(
+    default_factory=list,
+    metadata={'nargs': '+', 'args': ['-d', '--distros'], 'help': 'distro name(s) providing packages'}
+)
+
 
 @dataclass
 class _EnvSubcommand(CLIDataclass):
@@ -54,15 +59,11 @@ class EnvInstall(_EnvSubcommand, command_name='install'):
         default_factory=list,
         metadata={'nargs': '+', 'args': ['-r', '--requirements'], 'help': 'requirements file(s) listing packages'}
     )
-    distros: list[str] = field(
-        default_factory=list,
-        metadata={'nargs': '+', 'args': ['-d', '--distros'], 'help': 'distro name(s) providing packages'}
-    )
+    distros: list[str] = _distros_field
 
     def run(self) -> None:
         assert self.name is not None
-        # TODO: map distros to requirements files
-        Environment(self.name).install(packages=self.packages, requirements=self.requirements)
+        Environment(self.name).install(packages=self.packages, requirements=self.requirements, distros=self.distros)
 
 
 @dataclass
@@ -130,15 +131,11 @@ class EnvUninstall(_EnvSubcommand, command_name='uninstall'):
         default_factory=list,
         metadata={'nargs': '+', 'args': ['-r', '--requirements'], 'help': 'requirements file(s) listing packages'}
     )
-    distros: list[str] = field(
-        default_factory=list,
-        metadata={'nargs': '+', 'args': ['-d', '--distros'], 'help': 'distro name(s) providing packages'}
-    )
+    distros: list[str] = _distros_field
 
     def run(self) -> None:
         assert self.name is not None
-        # TODO: map distros to requirements files
-        Environment(self.name).uninstall(packages=self.packages, requirements=self.requirements)
+        Environment(self.name).uninstall(packages=self.packages, requirements=self.requirements, distros=self.distros)
 
 
 @dataclass
