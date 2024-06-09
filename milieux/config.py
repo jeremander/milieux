@@ -26,6 +26,18 @@ def user_default_base_dir() -> Path:
     """Gets the default path to the user's base workspace directory."""
     return user_dir() / 'workspace'
 
+# global variable storing the config path
+_CONFIG_PATH: Optional[Path] = None
+
+def get_config_path() -> Path:
+    """Gets the global configuration path."""
+    return _CONFIG_PATH or user_default_config_path()
+
+def set_config_path(cfg_path: Path) -> None:
+    """Sets the global configuration path."""
+    global _CONFIG_PATH
+    _CONFIG_PATH = cfg_path
+
 
 ##########
 # CONFIG #

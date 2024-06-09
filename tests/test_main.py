@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 from pathlib import Path
+import subprocess
 from typing import get_args, get_type_hints
 
 from milieux import PROG
@@ -68,7 +69,21 @@ class TestConfig:
 
     def test_config_path(self, tmp_config):
         cfg_path = user_default_config_path()
+        # test default config path
         check_main(['config', 'path'], stdout=str(cfg_path))
+        # override config path with nonexistent path
+        p = Path(tmp_config.base_dir) / 'test.toml'
+        check_main(['-c', str(p), 'config', 'path'], stderr=f'Could not find config file {p}', success=False)
+        # override config path with valid path
+        p.touch()
+        check_main(['-c', str(p), 'config', 'path'], stdout=str(p))
+        # empty config file uses default values
+        cfg = Config.from_toml_string(subprocess.check_output([PROG, '-c', str(p), 'config', 'show'], text=True))
+        assert cfg.env_dir == Config().env_dir
+        # override config path with existent path with invalid extension
+        p = Path(tmp_config.base_dir) / 'test'
+        p.touch()
+        check_main(['-c', str(p), 'config', 'path'], stderr=f'Invalid config file {p}', success=False)
 
 
 class TestScaffold:

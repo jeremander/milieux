@@ -5,9 +5,9 @@ from typing import Any, Union
 from fancy_dataclass import CLIDataclass
 from loguru import logger
 
-from milieux import PKG_NAME
+from milieux import PROG
 from milieux.cli import yes_no_prompt
-from milieux.config import Config, PipConfig, user_default_base_dir, user_default_config_path
+from milieux.config import Config, PipConfig, get_config_path, user_default_base_dir
 from milieux.errors import ConfigNotFoundError, UserInputError
 
 
@@ -21,7 +21,7 @@ class ConfigNew(CLIDataclass, command_name='new'):
 
     def run(self) -> None:
         """Creates a new config file interactively."""
-        path = user_default_config_path()
+        path = get_config_path()
         write = True
         if (not self.stdout) and path.exists():
             prompt = f'Config file {path} already exists. Overwrite?'
@@ -56,7 +56,7 @@ class ConfigPath(CLIDataclass, command_name='path'):
 
     def run(self) -> None:
         """Displays the path to the user's config file."""
-        print(user_default_config_path())
+        print(get_config_path())
 
 
 @dataclass
@@ -65,11 +65,11 @@ class ConfigShow(CLIDataclass, command_name='show'):
 
     def run(self) -> None:
         """Displays the contents of the user's config file."""
-        if (path := user_default_config_path()).exists():
+        if (path := get_config_path()).exists():
             cfg = Config.load(path)
             print(cfg.to_toml_string())
         else:
-            raise ConfigNotFoundError(f"No config file found. Run '{PKG_NAME} config new' to create a new one.")
+            raise ConfigNotFoundError(f"No config file found. Run '{PROG} config new' to create a new one.")
 
 
 @dataclass

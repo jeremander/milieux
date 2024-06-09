@@ -4,7 +4,6 @@
 
 ## v0.1.0
 
-- Take `-c`/`--config` argument at top-level (before subcommands) to specify a config file
 - Rudimentary `README`
 
 ## v0.2.0
