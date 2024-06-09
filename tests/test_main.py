@@ -135,7 +135,7 @@ class TestDistro:
         # create distro with requirements file
         req_path = projects_path / f'{name}.txt'
         req_path.write_text('pkg1\npkg3\n pkg2  \n')
-        output = [f'Distro {name!r} already exists', f'Creating distro {name!r} in {distro_path}', f'Wrote {name!r} requirements to']
+        output = [f'Distro {name!r} already exists', f'Creating distro {name!r}', f'Wrote {name!r} requirements to']
         check_main(['distro', 'new', name, '-r', str(req_path), '-f'], stderr=output)
         self._check_distro(distro_path, ['pkg1', 'pkg2', 'pkg3'])
         # create distro with both packages and requirements file

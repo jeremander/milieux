@@ -105,7 +105,7 @@ class Distro:
                 distro_path.unlink()
             else:
                 raise DistroExistsError(msg)
-        logger.info(f'Creating distro {name!r} in {distro_path}')
+        logger.info(f'Creating distro {name!r}')
         with open(distro_path, 'w') as f:
             for pkg in packages:
                 print(pkg, file=f)

@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "milieux"
 dynamic = ["version"]
 description = "Tool to assist in developing, building, and installing Python packages."
-# readme = "README.md"
+readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
 keywords = ["virtualenv"]
