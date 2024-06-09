@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 import json
@@ -13,9 +14,9 @@ from typing_extensions import Doc, Self
 
 from milieux import PROG
 from milieux.config import get_config
-from milieux.distro import Distro
+from milieux.distro import get_requirements
 from milieux.errors import EnvError, EnvironmentExistsError, MilieuxError, NoPackagesError, NoSuchEnvironmentError
-from milieux.utils import ensure_path, eprint, run_command
+from milieux.utils import AnyPath, ensure_path, eprint, run_command
 
 
 def get_env_base_dir() -> Path:
@@ -96,17 +97,10 @@ class Environment:
             info['packages'] = self.get_installed_packages()
         return info
 
-    def _get_requirements(self, requirements: Optional[list[str]] = None, distros: Optional[list[str]] = None) -> list[str]:
-        """Helper function to get requirements files, given a list of requirements files and/or distro names."""
-        requirements = requirements or []
-        if distros:  # get requirements path from distro name
-            requirements += [str(Distro(name).path) for name in distros]
-        return requirements
-
-    def _install_or_uninstall(self, install: bool, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None, distros: Optional[list[str]] = None) -> None:
+    def _install_or_uninstall(self, install: bool, packages: Optional[list[str]] = None, requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[list[str]] = None) -> None:
         """Installs one or more packages into the environment."""
         operation = 'install' if install else 'uninstall'
-        requirements = self._get_requirements(requirements, distros)
+        reqs = get_requirements(requirements, distros)
         if (not packages) and (not requirements):
             raise NoPackagesError(f'Must specify packages to {operation}')
         cmd = ['uv', 'pip', operation]
@@ -117,7 +111,7 @@ class Environment:
         if packages:
             cmd.extend(packages)
         if requirements:
-            cmd.extend(['-r'] + requirements)
+            cmd.extend(['-r'] + reqs)
         self.run_command(cmd)
 
     def activate(self) -> None:
@@ -177,8 +171,9 @@ class Environment:
         for pkg in packages:
             print(pkg)
 
-    def install(self, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None, distros: Optional[list[str]] = None) -> None:
+    def install(self, packages: Optional[list[str]] = None, requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[list[str]] = None) -> None:
         """Installs one or more packages into the environment."""
+        _ = self.env_path  # ensure environment exists
         logger.info(f'Installing dependencies into {self.name!r} environment')
         self._install_or_uninstall(True, packages=packages, requirements=requirements, distros=distros)
 
@@ -194,18 +189,19 @@ class Environment:
         info = self.get_info(list_packages=list_packages)
         print(json.dumps(info, indent=2))
 
-    def sync(self, requirements: Optional[list[str]] = None, distros: Optional[list[str]] = None) -> None:
+    def sync(self, requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[list[str]] = None) -> None:
         """Syncs dependencies in a distro or requirements files to the environment.
         NOTE: unlike 'install', this ensures the environment exactly matches the dependencies afterward."""
-        requirements = self._get_requirements(requirements, distros)
-        if not requirements:
+        reqs = get_requirements(requirements, distros)
+        if not reqs:
             raise NoPackagesError('Must specify dependencies to sync')
         logger.info(f'Syncing dependencies in {self.name!r} environment')
-        cmd = ['uv', 'pip', 'sync'] + requirements
+        cmd = ['uv', 'pip', 'sync'] + reqs
         self.run_command(cmd)
 
-    def uninstall(self, packages: Optional[list[str]] = None, requirements: Optional[list[str]] = None, distros: Optional[list[str]] = None) -> None:
+    def uninstall(self, packages: Optional[list[str]] = None, requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[list[str]] = None) -> None:
         """Uninstalls one or more packages from the environment."""
+        _ = self.env_path  # ensure environment exists
         logger.info(f'Uninstalling dependencies from {self.name!r} environment')
         self._install_or_uninstall(False, packages=packages, requirements=requirements, distros=distros)
 

@@ -4,15 +4,6 @@
 
 ## v0.1.0
 
-- Subcommands
-    - `env`
-        - make `name` positional
-        - `sync`: sync all deps from a distro (first compile)
-<!-- # Identify all transitive dependencies and create requirements.txt
-uv pip compile requirements.in --quiet --output-file requirements.txt
-
-# Update environment to match requirements.txt
-uv pip sync requirements.txt         -->
 - Take `-c`/`--config` argument at top-level (before subcommands) to specify a config file
 - Rudimentary `README`
 

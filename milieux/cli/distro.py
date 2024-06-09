@@ -1,14 +1,18 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from fancy_dataclass.cli import CLIDataclass
 
 from milieux.distro import Distro
 
 
-_name_field = field(metadata={'help': 'name of distro'})
+def _get_name_field(required: bool) -> Any:
+    # make 'name' a positional argument
+    metadata = {'args': ['name'], 'help': 'name of distro'}
+    if not required:
+        metadata['nargs'] = '?'
+    return field(default=None, metadata=metadata)
 
 _force_field = field(
     default=False,
@@ -30,7 +34,7 @@ class DistroList(CLIDataclass, command_name='list'):
 @dataclass
 class DistroLock(CLIDataclass, command_name='lock'):
     """Lock dependencies in a distro."""
-    name: str = _name_field
+    name: str = _get_name_field(required=True)
     new: Optional[str] = field(default=None, metadata={'nargs': '?', 'const': '', 'help': 'name of new locked distro'})
     force: bool = _force_field
     annotate: bool = field(default=False, metadata={'help': 'include comment annotations indicating the source of each package'})
@@ -52,26 +56,30 @@ class DistroLock(CLIDataclass, command_name='lock'):
 @dataclass
 class DistroNew(CLIDataclass, command_name='new'):
     """Create a new distro."""
-    name: str = _name_field
+    name: str = _get_name_field(required=False)
     packages: list[str] = field(
         default_factory=list,
-        metadata={'nargs': '+', 'help': 'list of packages to include in the distro'}
+        metadata={'nargs': '+', 'args': ['-p', '--packages'], 'help': 'list of packages to include in the distro'}
     )
     requirements: list[str] = field(
         default_factory=list,
         metadata={'nargs': '+', 'args': ['-r', '--requirements'], 'help': 'requirements file(s) listing packages'}
     )
+    distros: list[str] = field(
+        default_factory=list,
+        metadata={'nargs': '+', 'args': ['-d', '--distros'], 'help': 'existing distro name(s) to include'}
+    )
     force: bool = _force_field
 
     def run(self) -> None:
-        reqs = [Path(req) for req in self.requirements]
-        Distro.new(self.name, packages=self.packages, requirements=reqs, force=self.force)
+        name = self.name or input('Name of distro: ')
+        Distro.new(name, packages=self.packages, requirements=self.requirements, distros=self.distros, force=self.force)
 
 
 @dataclass
 class DistroRemove(CLIDataclass, command_name='remove'):
     """Remove a distro."""
-    name: str = _name_field
+    name: str = _get_name_field(required=True)
 
     def run(self) -> None:
         Distro(self.name).remove()
@@ -80,7 +88,7 @@ class DistroRemove(CLIDataclass, command_name='remove'):
 @dataclass
 class DistroShow(CLIDataclass, command_name='show'):
     """Show the contents of a distro."""
-    name: str = _name_field
+    name: str = _get_name_field(required=True)
 
     def run(self) -> None:
         Distro(self.name).show()

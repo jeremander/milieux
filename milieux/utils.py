@@ -9,6 +9,9 @@ from typing import Any
 from loguru import logger
 
 
+AnyPath = str | Path
+
+
 def run_command(cmd: list[Any], **kwargs: Any) -> subprocess.CompletedProcess[str]:
     """Runs a command (provided as a list) via subprocess.
     Passes any kwargs to subprocess.run."""
@@ -39,9 +42,9 @@ def ensure_path(path: Path) -> Path:
         path.mkdir(parents=True)
     return path
 
-def read_lines(path: Path) -> list[str]:
+def read_lines(path: AnyPath) -> list[str]:
     """Reads lines of text from a file."""
-    return path.read_text().splitlines()
+    return Path(path).read_text().splitlines()
 
 def eprint(s: str, **kwargs: Any) -> None:
     """Prints a string to stderr."""

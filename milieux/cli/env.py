@@ -7,10 +7,16 @@ from milieux.env import Environment
 
 
 def _get_name_field(required: bool) -> Any:
-    metadata = {'args': ['-n', '--name'], 'required': required, 'help': 'name of environment'}
+    # make 'name' a positional argument
+    metadata = {'args': ['name'], 'help': 'name of environment'}
+    if not required:
+        metadata['nargs'] = '?'
     return field(default=None, metadata=metadata)
 
-_packages_field_help = 'list of packages to install into the environment (can optionally include constraints, e.g. "numpy>=1.25")'
+_packages_field: Any = field(
+    default_factory=list,
+    metadata={'nargs': '+', 'args': ['-p', '--packages'], 'help': 'list of packages to install into the environment (can optionally include constraints, e.g. "numpy>=1.25")'}
+)
 
 _requirements_field: Any = field(
     default_factory=list,
@@ -58,8 +64,8 @@ class EnvFreeze(EnvSubcommand, command_name='freeze'):
 @dataclass
 class EnvInstall(_EnvSubcommand, command_name='install'):
     """Install packages into an environment."""
-    packages: list[str] = field(metadata={'help': _packages_field_help})
     name: Optional[str] = _get_name_field(required=True)
+    packages: list[str] = _packages_field
     requirements: list[str] = _requirements_field
     distros: list[str] = _distros_field
 
@@ -143,8 +149,8 @@ class EnvSync(_EnvSubcommand, command_name='sync'):
 @dataclass
 class EnvUninstall(_EnvSubcommand, command_name='uninstall'):
     """Uninstall packages from an environment."""
-    packages: list[str] = field(metadata={'help': _packages_field_help})
     name: Optional[str] = _get_name_field(required=True)
+    packages: list[str] = _packages_field
     requirements: list[str] = _requirements_field
     distros: list[str] = _distros_field
 

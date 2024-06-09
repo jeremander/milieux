@@ -42,13 +42,16 @@ class MilieuxCLI(CLIDataclass):
         try:
             # delegate to subcommand
             super().run()
-        except Exception as e:
+        except BaseException as e:
             if isinstance(e, MilieuxError):  # expected error: just show the message
                 msg = str(e)
+            elif isinstance(e, KeyboardInterrupt):
+                msg = None
             else:  # unexpected error: show full traceback
                 lines = traceback.format_exception(type(e), e, e.__traceback__)
                 msg = ''.join(lines)
-            logger.error(msg)
+            if msg:
+                logger.error(msg)
             sys.exit(1)
 
 

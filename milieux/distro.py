@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from subprocess import CalledProcessError
@@ -8,7 +9,7 @@ from typing_extensions import Doc, Self
 
 from milieux.config import get_config
 from milieux.errors import DistroExistsError, InvalidDistroError, NoPackagesError, NoSuchDistroError, NoSuchRequirementsFileError
-from milieux.utils import ensure_path, eprint, read_lines, run_command
+from milieux.utils import AnyPath, ensure_path, eprint, read_lines, run_command
 
 
 def get_distro_base_dir() -> Path:
@@ -16,16 +17,24 @@ def get_distro_base_dir() -> Path:
     cfg = get_config()
     return ensure_path(cfg.distro_dir_path)
 
-def get_packages(packages: Optional[list[str]] = None, requirements: Optional[list[Path]] = None) -> list[str]:
+def get_requirements(requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[Sequence[str]] = None) -> list[str]:
+    """Helper function to get requirements files, given a list of requirements files and/or distro names."""
+    reqs = [str(req) for req in requirements] if requirements else []
+    if distros:  # get requirements path from distro name
+        reqs += [str(Distro(name).path) for name in distros]
+    return reqs
+
+def get_packages(packages: Optional[Sequence[str]] = None, requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[Sequence[str]] = None) -> list[str]:
     """Given a list of packages and a list of requirements files, gets a list of all packages therein.
     Deduplicates any identical entries, and sorts alphabetically."""
-    if (not packages) and (not requirements):
+    reqs = get_requirements(requirements, distros)
+    if (not packages) and (not reqs):
         raise NoPackagesError('Must specify at least one package')
-    pkgs = set()
+    pkgs: set[str] = set()
     if packages:
         pkgs.update(packages)
-    if requirements:
-        for req in requirements:
+    if reqs:
+        for req in reqs:
             try:
                 pkgs.update(stripped for line in read_lines(req) if (stripped := line.strip()))
             except FileNotFoundError as e:
@@ -81,11 +90,12 @@ class Distro:
     def new(cls,
         name: str,
         packages: Optional[list[str]] = None,
-        requirements: Optional[list[Path]] = None,
+        requirements: Optional[Sequence[AnyPath]] = None,
+        distros: Optional[list[str]] = None,
         force: bool = False
     ) -> Self:
         """Creates a new distro."""
-        packages = get_packages(packages, requirements)
+        packages = get_packages(packages, requirements, distros)
         distro_base_dir = get_distro_base_dir()
         distro_path = distro_base_dir / f'{name}.txt'
         if distro_path.exists():
@@ -95,6 +105,7 @@ class Distro:
                 distro_path.unlink()
             else:
                 raise DistroExistsError(msg)
+        logger.info(f'Creating distro {name!r} in {distro_path}')
         with open(distro_path, 'w') as f:
             for pkg in packages:
                 print(pkg, file=f)
