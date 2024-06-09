@@ -78,10 +78,6 @@ class EnvList(_EnvSubcommand, command_name='list'):
 class EnvNew(EnvSubcommand, command_name='new'):
     """Create a new environment."""
     name: Optional[str] = _get_name_field(required=False)
-    packages: list[str] = field(
-        default_factory=list,
-        metadata={'nargs': '+', 'help': _packages_field_help}
-    )
     seed: bool = field(
         default=False,
         metadata={'help': 'install "seed" packages (e.g. `pip`) into environment'}
@@ -100,7 +96,7 @@ class EnvNew(EnvSubcommand, command_name='new'):
 
     def run(self) -> None:
         name = self.name or input('Name of environment: ')
-        Environment.new(name, packages=self.packages, seed=self.seed, python=self.python, force=self.force)
+        Environment.new(name, seed=self.seed, python=self.python, force=self.force)
 
 
 @dataclass

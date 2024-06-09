@@ -133,15 +133,12 @@ class Environment:
     @classmethod
     def new(cls,
         name: str,
-        packages: Optional[list[str]] = None,
         seed: bool = False,
         python: Optional[str] = None,
         force: bool = False,
     ) -> Self:
         """Creates a new environment.
         Uses the version of Python currently on the user's PATH."""
-        if packages:
-            raise NotImplementedError
         env_base_dir = get_env_base_dir()
         new_env_dir = env_base_dir / name
         if new_env_dir.exists():
@@ -163,7 +160,6 @@ class Environment:
         except CalledProcessError as e:
             shutil.rmtree(new_env_dir)
             raise EnvError(e.stderr.rstrip()) from e
-        # TODO: packages (call `install`?)
         lines = [line for line in res.stderr.splitlines() if not line.startswith('Activate')]
         logger.info('\n'.join(lines))
         env = cls(name, env_base_dir)
