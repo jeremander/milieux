@@ -97,7 +97,7 @@ class Environment:
             info['packages'] = self.get_installed_packages()
         return info
 
-    def _install_or_uninstall(self, install: bool, packages: Optional[list[str]] = None, requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[list[str]] = None) -> None:
+    def _install_or_uninstall_cmd(self, install: bool, packages: Optional[list[str]] = None, requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[list[str]] = None) -> list[str]:
         """Installs one or more packages into the environment."""
         operation = 'install' if install else 'uninstall'
         reqs = get_requirements(requirements, distros)
@@ -112,7 +112,7 @@ class Environment:
             cmd.extend(packages)
         if requirements:
             cmd.extend(['-r'] + reqs)
-        self.run_command(cmd)
+        return cmd
 
     def activate(self) -> None:
         """Prints info about how to activate the environment."""
@@ -130,7 +130,8 @@ class Environment:
         eprint('deactivate\n')
 
     @classmethod
-    def new(cls,
+    def new(
+        cls,
         name: str,
         seed: bool = False,
         python: Optional[str] = None,
@@ -171,11 +172,20 @@ class Environment:
         for pkg in packages:
             print(pkg)
 
-    def install(self, packages: Optional[list[str]] = None, requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[list[str]] = None) -> None:
+    def install(
+        self,
+        packages: Optional[list[str]] = None,
+        requirements: Optional[Sequence[AnyPath]] = None,
+        distros: Optional[list[str]] = None,
+        upgrade: bool = False,
+    ) -> None:
         """Installs one or more packages into the environment."""
         _ = self.env_path  # ensure environment exists
         logger.info(f'Installing dependencies into {self.name!r} environment')
-        self._install_or_uninstall(True, packages=packages, requirements=requirements, distros=distros)
+        cmd = self._install_or_uninstall_cmd(True, packages=packages, requirements=requirements, distros=distros)
+        if upgrade:
+            cmd.append('--upgrade')
+        self.run_command(cmd)
 
     def remove(self) -> None:
         """Deletes the environment."""
@@ -199,11 +209,17 @@ class Environment:
         cmd = ['uv', 'pip', 'sync'] + reqs
         self.run_command(cmd)
 
-    def uninstall(self, packages: Optional[list[str]] = None, requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[list[str]] = None) -> None:
+    def uninstall(
+        self,
+        packages: Optional[list[str]] = None,
+        requirements: Optional[Sequence[AnyPath]] = None,
+        distros: Optional[list[str]] = None
+    ) -> None:
         """Uninstalls one or more packages from the environment."""
         _ = self.env_path  # ensure environment exists
         logger.info(f'Uninstalling dependencies from {self.name!r} environment')
-        self._install_or_uninstall(False, packages=packages, requirements=requirements, distros=distros)
+        cmd = self._install_or_uninstall_cmd(False, packages=packages, requirements=requirements, distros=distros)
+        self.run_command(cmd)
 
     # NOTE: due to a bug in mypy (https://github.com/python/mypy/issues/15047), this method must come last
     @classmethod

@@ -2,10 +2,6 @@
 
 # TODO
 
-## v0.1.0
-
-- Build/publish
-
 ## v0.2.0
 
 - Editable installs

@@ -4,7 +4,7 @@ import sys
 from loguru import logger
 
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 # name of the main executable
 PROG = 'milieux'

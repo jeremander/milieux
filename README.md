@@ -26,13 +26,21 @@ milieux env new my_env
 milieux env install -d scientific
 ```
 
-🦀 Dependencies and environments are managed by the [uv](https://github.com/astral-sh/uv) tool, an ultra-fast package installer and resolver written in Rust.
-
 ## Installation
 
 ```shell
 pip install milieux
 ```
+
+### Dependencies
+
+- 🦀 [uv](https://github.com/astral-sh/uv), an ultra-fast package resolver and installer written in Rust.
+
+- 🐍 [hatch](https://github.com/pypa/hatch), for building/publishing packages.
+
+- 🤵🏻‍♂️ [fancy_dataclass](https://fancy-dataclass.readthedocs.io/en/latest/), for configurations and argument parsing.
+
+- 🧘 [loguru](https://loguru.readthedocs.io/en/stable/), for logging output.
 
 ## Usage
 

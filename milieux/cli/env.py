@@ -68,10 +68,11 @@ class EnvInstall(_EnvSubcommand, command_name='install'):
     packages: list[str] = _packages_field
     requirements: list[str] = _requirements_field
     distros: list[str] = _distros_field
+    upgrade: bool = field(default=False, metadata={'help': 'allow package upgrades'})
 
     def run(self) -> None:
         assert self.name is not None
-        Environment(self.name).install(packages=self.packages, requirements=self.requirements, distros=self.distros)
+        Environment(self.name).install(packages=self.packages, requirements=self.requirements, distros=self.distros, upgrade=self.upgrade)
 
 
 @dataclass
