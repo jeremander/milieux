@@ -4,16 +4,13 @@
 
 ## v0.2.0
 
-- Some mechanism for "hooks" or "templates" to create arbitrary scaffold (file or directory tree) when creating a new environment, using `jinja2` and variables like `ENV_NAME`, `ENV_DIR`.
-    - Can pass a file/directory path to `env create`, or have separate command `env hook`
 - Subcommands
-    - `build`
-        - Build `sdist` or `wheel`
-        - Should it be a single project or an entire distribution?
-    - `publish`
-        - Publish to PyPI (actual or local)
-    - `scaffold`
-        - Add `poetry` utility
+    - `scaffold`: add `poetry` utility
+        - Extra dep. group `[scaffold]`, perhaps?
+        - Gracefully handle missing utility.
+- Some mechanism for "hooks" or "templates" to create arbitrary scaffold (file or directory tree) when creating a new environment, using `jinja2` and variables like `ENV_NAME`, `ENV_DIR`, `PYTHON_VERSION`.
+    - `env template` subcommand, simply renders `jinja` template with specific variables
+        - For now, both input and output can be a single file (both required).
 
 ## v0.3.0
 
@@ -23,6 +20,15 @@
 ## Future
 
 - Subcommands
+    - Build/publish
+        - May just be thin wrappers for `hatch`?
+        - Or could build wheels for entire distro and upload them all
+            - `uv` does not yet seem to replace `pip wheel`
+        - `build`
+            - Build `sdist` or `wheel`
+            - See: https://pip.pypa.io/en/stable/cli/pip_wheel/
+        - `publish`
+            - Publish to PyPI (actual or local)
     - `config`
         - Config registry: various pre-made configs stored within `milieux`?
         - `use`: use a pre-installed config
@@ -45,7 +51,7 @@
         - `sphinx` or `mkdocs`
         - Build a single site, or multiple sites for each project
     - `scaffold`
-        - Use `poetry`, `cookiecutter`, etc.
+        - Support `cookiecutter` or some means of custom scaffolding
 - "Recipes" (in README)
     - create dev environment
     - activate/use dev environment (including someone else's)

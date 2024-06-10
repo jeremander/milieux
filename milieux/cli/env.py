@@ -1,3 +1,4 @@
+from argparse import RawDescriptionHelpFormatter
 from dataclasses import dataclass, field
 from typing import Any, Optional, Union
 
@@ -132,19 +133,18 @@ class EnvShow(EnvSubcommand, command_name='show'):
 
 
 @dataclass
-class EnvSync(_EnvSubcommand, command_name='sync'):
+class EnvSync(_EnvSubcommand,
+    command_name='sync',
+    formatter_class=RawDescriptionHelpFormatter,
+    help_descr_brief='sync dependencies for an environment'
+):
     """Sync dependencies for an environment.
 
-    NOTE: it is often a good idea to sync from a set of *locked* dependencies (run `milieux distro lock` to create one)."""
+NOTE: it is often a good idea to sync from a set of *locked* dependencies.
+Run `milieux distro lock` to create one."""
     name: Optional[str] = _get_name_field(required=True)
     requirements: list[str] = _requirements_field
     distros: list[str] = _distros_field
-
-    @classmethod
-    def parser_description_brief(cls) -> Optional[str]:
-        doc = cls.__doc__
-        assert isinstance(doc, str)
-        return doc.splitlines()[0].lower()[:-1]
 
     def run(self) -> None:
         assert self.name is not None

@@ -17,7 +17,7 @@ classifiers = [
   "Programming Language :: Python"
 ]
 dependencies = [
-  "fancy_dataclass >= 0.4.6",
+  "fancy_dataclass >= 0.6",
   "hatch",
   "loguru",
   "typing_extensions >= 4.10",

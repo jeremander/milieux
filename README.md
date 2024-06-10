@@ -8,6 +8,8 @@
 
 A general-purpose tool to assist in developing, building, and installing Python packages.
 
+⚠️ `milieux` is currently in its very early stages and should *not* be considered stable.
+
 ## Introduction
 
 `milieux` is a tool used for managing multiple [virtual environments](https://realpython.com/python-virtual-environments-a-primer/#why-do-you-need-virtual-environments) and *distributions*.
@@ -90,7 +92,7 @@ Locking dependencies can ensure reproducibility of environments (someone else ca
 
 **Example**: from the earlier `scientific` distro example, lock dependencies to the current versions, and save them to a new distro marked with the current date.
 
-```shell
+```text
 $ milieux distro lock scientific --new scientific.20240609
 
 Locking dependencies for 'scientific' distro
