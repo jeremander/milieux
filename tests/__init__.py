@@ -1,5 +1,6 @@
 from contextlib import contextmanager, nullcontext, redirect_stderr, redirect_stdout, suppress
 from io import StringIO
+from pathlib import Path
 import re
 import sys
 from typing import Annotated, Callable, Optional, Union
@@ -12,6 +13,9 @@ from milieux.cli.main import MilieuxCLI
 
 
 Args = Union[str, list[str]]
+
+# test data directory
+TEST_DATA_DIR = Path(__file__).with_name('data')
 
 
 @contextmanager

@@ -19,6 +19,7 @@ classifiers = [
 dependencies = [
   "fancy_dataclass >= 0.6",
   "hatch",
+  "jinja2",
   "loguru",
   "typing_extensions >= 4.10",
   "uv",

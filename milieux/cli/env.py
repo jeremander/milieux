@@ -1,10 +1,12 @@
 from argparse import RawDescriptionHelpFormatter
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Optional, Union
 
 from fancy_dataclass.cli import CLIDataclass
 
-from milieux.env import Environment
+from milieux.env import TEMPLATE_ENV_VARS, Environment
+from milieux.errors import NoSuchTemplateError, UserInputError
 
 
 def _get_name_field(required: bool) -> Any:
@@ -151,6 +153,56 @@ Run `milieux distro lock` to create one."""
         Environment(self.name).sync(requirements=self.requirements, distros=self.distros)
 
 
+_env_template_descr = 'Render one or more jinja templates, filling in variables from an environment.\n\nThe following variables from the environment may be used in {{ENV_VARIABLE}}\nexpressions within your template:\n'
+_env_template_descr += '\n'.join(f'\t{key}: {val}' for (key, val) in TEMPLATE_ENV_VARS.items())
+_env_template_descr += '\n\nExtra variables may be provided via the --extra-vars argument.'
+
+@dataclass
+class EnvTemplate(EnvSubcommand,
+    command_name='template',
+    formatter_class=RawDescriptionHelpFormatter,
+    help_descr=_env_template_descr,
+):
+    """Render a template, filling in variables from an environment."""
+    # TODO: list variables in docstring
+    templates: list[Path] = field(
+        default_factory=list,
+        metadata={'args': ['-t', '--templates'], 'required': True, 'nargs': '+', 'help': 'jinja template(s) to render'}
+    )
+    suffix: Optional[str] = field(
+        default=None,
+        metadata={'help': 'suffix to replace template file extensions for output'}
+    )
+    extra_vars: list[str] = field(
+        default_factory=list,
+        metadata={'nargs': '+', 'help': 'extra variables to pass to template, format is: "VAR1=VALUE1 VAR2=VALUE2 ..."'}
+    )
+
+    def __post_init__(self) -> None:
+        # parse extra_vars
+        extra_vars = {}
+        for tok in self.extra_vars:
+            if '=' in tok:
+                [key, val] = tok.split('=', maxsplit=1)
+                if key in extra_vars:
+                    raise UserInputError(f'Duplicate variable {key!r} in --extra-vars')
+                extra_vars[key] = val
+            else:
+                raise UserInputError(f'Invalid VARIABLE=VALUE string: {tok}')
+        self._extra_vars = extra_vars
+
+    def run(self) -> None:
+        assert self.name is not None
+        if (not self.suffix) and (len(self.templates) > 1):
+            raise UserInputError('When rendering multiple templates, you must set a --suffix for output files')
+        for template in self.templates:
+            if not template.is_file():
+                raise NoSuchTemplateError(template)
+        env = Environment(self.name)
+        for template in self.templates:
+            env.render_template(template=template, suffix=self.suffix, extra_vars=self._extra_vars)
+
+
 @dataclass
 class EnvUninstall(_EnvSubcommand, command_name='uninstall'):
     """Uninstall packages from an environment."""
@@ -177,5 +229,6 @@ class EnvCmd(CLIDataclass, command_name='env'):
         EnvRemove,
         EnvShow,
         EnvSync,
+        EnvTemplate,
         EnvUninstall,
     ] = field(metadata={'subcommand': True})

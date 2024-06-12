@@ -125,6 +125,7 @@ tzdata==2024.1
 | `remove`    | Remove an environment |
 | `show`      | Show environment info |
 | `sync`      | Sync dependencies |
+| `template`  | Render a [jinja](https://jinja.palletsprojects.com/en/3.1.x/) template, filling in variables from an environment |
 | `uninstall` | Uninstall packages |
 
 #### Activate an environment
@@ -153,6 +154,12 @@ milieux env install my_env -d scientific -p scikit-learn torch
 
 `milieux env sync` is similar to `install`, but instead of installing new packages, it will *sync* them to the environment, making sure these are the *only* packages in the environment. This is ideal for controlling exactly what version of each specific package you want (see: [locking dependencies](#locking-dependencies)).
 
+<!--
+#### Render template file for an environment
+
+TODO: include a description of `milieux env template` (this may be TMI).
+-->
+
 ### `scaffold`: Create project scaffold
 
 `milieux scaffold` creates a new Python project from a default or custom scaffold.
@@ -165,7 +172,7 @@ The command above will create a new project in a `my_project` subdirectory.
 
 The `--utility` argument lets you specify the utility for creating the project scaffold.
 
-🚧 At present, the only supported scaffold utility is [hatch](https://hatch.pypa.io/latest). In the future we plan to support arbitrary project templates via [jinja2](https://jinja.palletsprojects.com/en/3.1.x/) and/or [cookiecutter](https://cookiecutter.readthedocs.io/en/stable/).
+🚧 At present, the only supported scaffold utility is [hatch](https://hatch.pypa.io/latest). In the future we plan to support arbitrary project templates via [jinja](https://jinja.palletsprojects.com/en/3.1.x/) and/or [cookiecutter](https://cookiecutter.readthedocs.io/en/stable/).
 
 ### `config`: Manage configurations
 

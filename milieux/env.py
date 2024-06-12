@@ -9,13 +9,14 @@ import shutil
 from subprocess import CalledProcessError, CompletedProcess
 from typing import Annotated, Any, Optional
 
+import jinja2
 from loguru import logger
 from typing_extensions import Doc, Self
 
 from milieux import PROG
 from milieux.config import get_config
 from milieux.distro import get_requirements
-from milieux.errors import EnvError, EnvironmentExistsError, MilieuxError, NoPackagesError, NoSuchEnvironmentError
+from milieux.errors import EnvError, EnvironmentExistsError, MilieuxError, NoPackagesError, NoSuchEnvironmentError, TemplateError
 from milieux.utils import AnyPath, ensure_path, eprint, run_command
 
 
@@ -23,6 +24,20 @@ def get_env_base_dir() -> Path:
     """Checks if the configured environment directory exists, and if not, creates it."""
     cfg = get_config()
     return ensure_path(cfg.env_dir_path)
+
+# defines the available environment variables for jinja templates
+TEMPLATE_ENV_VARS = {
+    'ENV_NAME': 'environment name',
+    'ENV_DIR': 'environment directory',
+    'ENV_BASE_DIR': 'base directory for all environments',
+    'ENV_CONFIG_PATH': 'path to environment config file',
+    'ENV_BIN_DIR': 'environment bin directory',
+    'ENV_LIB_DIR': 'environment lib directory',
+    'ENV_SITE_PACKAGES_DIR': 'environment site_packages directory',
+    'ENV_ACTIVATE_PATH': 'path to environment activation script',
+    'ENV_PYVERSION': 'Python version for the environment (e.g. 3.11.2)',
+    'ENV_PYVERSION_MINOR': 'Minor Python version for the environment (e.g. 3.11)',
+}
 
 
 @dataclass
@@ -36,28 +51,39 @@ class Environment:
         self.dir_path = dir_path or get_env_base_dir()
 
     @property
-    def env_path(self) -> Path:
+    def env_dir(self) -> Path:
         """Gets the path to the environment.
         If no such environment exists, raises a NoSuchEnvironmentError."""
-        env_path = self.dir_path / self.name
-        if not env_path.exists():
+        env_dir = self.dir_path / self.name
+        if not env_dir.is_dir():
             raise NoSuchEnvironmentError(self.name)
-        return env_path
+        return env_dir
 
     @property
     def config_path(self) -> Path:
         """Gets the path to the environment config file."""
-        return self.env_path / 'pyvenv.cfg'
+        return self.env_dir / 'pyvenv.cfg'
 
     @property
-    def bin_path(self) -> Path:
+    def bin_dir(self) -> Path:
         """Gets the path to the environment's bin directory."""
-        return self.env_path / 'bin'
+        return self.env_dir / 'bin'
+
+    @property
+    def lib_dir(self) -> Path:
+        """Gets the path to the environment's lib directory."""
+        return self.env_dir / 'lib'
+
+    @property
+    def site_packages_dir(self) -> Path:
+        """Gets the path to the environment's site_packages directory."""
+        minor_version = '.'.join(self.python_version.split('.')[:2])
+        return self.env_dir / 'lib' / f'python{minor_version}' / 'site-packages'
 
     @property
     def activate_path(self) -> Path:
         """Gets the path to the environment's activation script."""
-        return self.bin_path / 'activate'
+        return self.bin_dir / 'activate'
 
     @property
     def python_version(self) -> str:
@@ -72,14 +98,29 @@ class Environment:
         return version
 
     @property
-    def site_packages_path(self) -> Path:
-        """Gets the path to the environment's site_packages directory."""
-        minor_version = '.'.join(self.python_version.split('.')[:2])
-        return self.env_path / 'lib' / f'python{minor_version}' / 'site-packages'
+    def template_env_vars(self) -> dict[str, Any]:
+        """Gets a mapping from template environment variables to their values for this environment.
+        NOTE: the values may be strings or Path objects (the latter make it easier to perform path operations within a jinja template)."""
+        pyversion = self.python_version
+        pyversion_minor = '.'.join(pyversion.split('.')[:2])
+        env_vars = {
+            'ENV_NAME': self.name,
+            'ENV_DIR': self.env_dir,
+            'ENV_BASE_DIR': self.dir_path,
+            'ENV_CONFIG_PATH': self.config_path,
+            'ENV_BIN_DIR': self.bin_dir,
+            'ENV_LIB_DIR': self.lib_dir,
+            'ENV_SITE_PACKAGES_DIR': self.site_packages_dir,
+            'ENV_ACTIVATE_PATH': self.activate_path,
+            'ENV_PYVERSION': pyversion,
+            'ENV_PYVERSION_MINOR': pyversion_minor,
+        }
+        assert set(env_vars) == set(TEMPLATE_ENV_VARS)
+        return env_vars
 
     def run_command(self, cmd: list[str], **kwargs: Any) -> CompletedProcess[str]:
         """Runs a command with the VIRTUAL_ENV environment variable set."""
-        cmd_env = {**os.environ, 'VIRTUAL_ENV': str(self.env_path)}
+        cmd_env = {**os.environ, 'VIRTUAL_ENV': str(self.env_dir)}
         return run_command(cmd, env=cmd_env, **kwargs)
 
     def get_installed_packages(self) -> list[str]:
@@ -90,7 +131,7 @@ class Environment:
 
     def get_info(self, list_packages: bool = False) -> dict[str, Any]:
         """Gets details about the environment, as a JSON-compatible dict."""
-        path = self.env_path
+        path = self.env_dir
         created_at = datetime.fromtimestamp(path.stat().st_ctime).isoformat()
         info: dict[str, Any] = {'name': self.name, 'path': str(path), 'created_at': created_at}
         if list_packages:
@@ -188,7 +229,7 @@ class Environment:
         editable: Optional[str] = None,
     ) -> None:
         """Installs one or more packages into the environment."""
-        _ = self.env_path  # ensure environment exists
+        _ = self.env_dir  # ensure environment exists
         logger.info(f'Installing dependencies into {self.name!r} environment')
         cmd = self._install_or_uninstall_cmd(True, packages=packages, requirements=requirements, distros=distros, editable=editable)
         if upgrade:
@@ -199,10 +240,32 @@ class Environment:
 
     def remove(self) -> None:
         """Deletes the environment."""
-        env_path = self.env_path
+        env_dir = self.env_dir
         logger.info(f'Deleting {self.name!r} environment')
-        shutil.rmtree(env_path)
-        logger.info(f'Deleted {env_path}')
+        shutil.rmtree(env_dir)
+        logger.info(f'Deleted {env_dir}')
+
+    def render_template(self, template: Path, suffix: Optional[str] = None, extra_vars: Optional[dict[str, Any]] = None) -> None:
+        """Renders a jinja template, filling in variables from the environment.
+        If suffix is None, prints the output to stdout.
+        Otherwise, saves a new file with the original file extension replaced by this suffix.
+        extra_vars is an optional mapping from extra variables to values."""
+        # error if unknown variables are present
+        env = jinja2.Environment(undefined=jinja2.StrictUndefined)
+        try:
+            input_template = env.from_string(template.read_text())
+            kwargs = {**self.template_env_vars, **(extra_vars or {})}
+            output = input_template.render(**kwargs)
+        except jinja2.exceptions.TemplateError as e:
+            msg = f'Error rendering template {template} - {e}'
+            raise TemplateError(msg) from e
+        if suffix is None:
+            print(output)
+        else:
+            suffix = suffix if suffix.startswith('.') else ('.' + suffix)
+            output_path = template.with_suffix(suffix)
+            output_path.write_text(output)
+            logger.info(f'Rendered template {template} to {output_path}')
 
     def show(self, list_packages: bool = False) -> None:
         """Shows details about the environment."""
@@ -226,7 +289,7 @@ class Environment:
         distros: Optional[list[str]] = None
     ) -> None:
         """Uninstalls one or more packages from the environment."""
-        _ = self.env_path  # ensure environment exists
+        _ = self.env_dir  # ensure environment exists
         logger.info(f'Uninstalling dependencies from {self.name!r} environment')
         cmd = self._install_or_uninstall_cmd(False, packages=packages, requirements=requirements, distros=distros)
         self.run_command(cmd)

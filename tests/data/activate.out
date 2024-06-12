@@ -1,0 +1,18 @@
+
+
+# example template for a custom activation script
+
+echo "Activating environment: myenv"
+echo "Using Python 3.11.2"
+
+# source environment's activation script
+source /path/to/myenv/bin/activate
+
+# set up custom alias, pointing to environment's bin dir
+alias myprog="/path/to/myenv/bin/my_program"
+
+# regular environment variables do not get substituted during render
+export HOME_DIR=$HOME
+
+# make use of a custom variable
+echo "CUSTOM_VAR = custom"

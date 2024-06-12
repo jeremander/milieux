@@ -2,16 +2,6 @@
 
 # TODO
 
-## v0.2.0
-
-- Subcommands
-    - `scaffold`: add `poetry` utility
-        - Extra dep. group `[scaffold]`, perhaps?
-        - Gracefully handle missing utility.
-- Some mechanism for "hooks" or "templates" to create arbitrary scaffold (file or directory tree) when creating a new environment, using `jinja2` and variables like `ENV_NAME`, `ENV_DIR`, `PYTHON_VERSION`.
-    - `env template` subcommand, simply renders `jinja` template with specific variables
-        - For now, both input and output can be a single file (both required).
-
 ## v0.3.0
 
 - Switch to `rich` for prompts, tables, etc.
@@ -52,6 +42,9 @@
         - Build a single site, or multiple sites for each project
     - `scaffold`
         - Support `cookiecutter` or some means of custom scaffolding
+        - `poetry` scaffolder?
+            - Gracefully handle missing utility.
+        - Extra dep. group `[scaffold]`, perhaps?
 - "Recipes" (in README)
     - create dev environment
     - activate/use dev environment (including someone else's)

@@ -1,0 +1,18 @@
+{# this is a jinja comment #}
+
+# example template for a custom activation script
+
+echo "Activating environment: {{ENV_NAME}}"
+echo "Using Python {{ENV_PYVERSION}}"
+
+# source environment's activation script
+source {{ENV_ACTIVATE_PATH}}
+
+# set up custom alias, pointing to environment's bin dir
+alias myprog="{{ENV_BIN_DIR}}/my_program"
+
+# regular environment variables do not get substituted during render
+export HOME_DIR=$HOME
+
+# make use of a custom variable
+echo "CUSTOM_VAR = {{CUSTOM_VAR}}"

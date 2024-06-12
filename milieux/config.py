@@ -86,8 +86,15 @@ class Config(ConfigDataclass, TOMLDataclass):  # type: ignore[misc]
 
 
 def get_config() -> Config:
-    """Gets the current configurations, raising a ConfigNotFoundError if there are none configured."""
+    """Gets the current configurations.
+    If none are set, loads them from the user's default config path."""
     cfg = Config.get_config()
     if cfg is None:
-        raise ConfigNotFoundError('missing configurations')
+        config_path = user_default_config_path()
+        try:
+            cfg = Config.load_config(config_path)
+        except FileNotFoundError as e:
+            raise ConfigNotFoundError(f'Could not load configs from {config_path}') from e
+        set_config_path(config_path)
+        cfg.update_config()
     return cfg

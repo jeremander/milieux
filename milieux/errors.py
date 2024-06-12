@@ -46,3 +46,12 @@ class NoSuchRequirementsFileError(MilieuxError):
     def __init__(self, reqs_path: Union[str, Path]) -> None:
         self.reqs_path = reqs_path
         super().__init__(f'No requirements file: {reqs_path}')
+
+class TemplateError(MilieuxError):
+    """Error involving a jinja template."""
+
+class NoSuchTemplateError(TemplateError):
+    """Error for when a template file does not exist."""
+    def __init__(self, template_file: Union[str, Path]) -> None:
+        self.template_file = template_file
+        super().__init__(f'Template file {template_file} does not exist')

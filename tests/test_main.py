@@ -1,6 +1,9 @@
+from contextlib import redirect_stdout
 from datetime import datetime
+from io import StringIO
 import json
 from pathlib import Path
+import shutil
 import subprocess
 from typing import get_args, get_type_hints
 
@@ -11,7 +14,7 @@ from milieux.distro import Distro
 from milieux.env import Environment
 from milieux.utils import read_lines
 
-from . import check_main
+from . import TEST_DATA_DIR, check_main
 
 
 def test_main_missing_args():
@@ -29,7 +32,7 @@ def test_subcommand_help():
         check_main([cmd_name, '--help'], stdout=[cmd_name, '--help'])
 
 def check_package(env: Environment, pkg_name: str, exists: bool, editable: bool = False) -> None:
-    glob = env.site_packages_path.glob(f'{pkg_name}*.dist-info' if editable else pkg_name)
+    glob = env.site_packages_dir.glob(f'{pkg_name}*.dist-info' if editable else pkg_name)
     pkg_dirs = [p for p in glob if p.is_dir()]
     if exists:
         assert len(pkg_dirs) == 1
@@ -40,14 +43,10 @@ def check_package(env: Environment, pkg_name: str, exists: bool, editable: bool 
         assert not pkg_dirs
 
 def get_module_path(env: Environment, pkg_name: str) -> str:
-    python_exec = env.bin_path / 'python'
+    python_exec = env.bin_dir / 'python'
     cmd = [str(python_exec), '-c', f'import {pkg_name}; print({pkg_name}.__file__)']
     return subprocess.check_output(cmd, text=True)
 
-
-##########
-# CONFIG #
-##########
 
 class TestConfig:
 
@@ -302,3 +301,24 @@ class TestEnv:
         check_package(env, 'project2', False)
         # sync nonexistent distro
         check_main(['env', 'sync', 'myenv', '-d', 'fake_dist'], stderr="No distro named 'fake_dist'", success=False)
+
+    def test_template(self, monkeypatch, tmp_config):
+        name = 'myenv'
+        monkeypatch.setattr('milieux.env.Environment.env_dir', Path(f'/path/to/{name}'))
+        monkeypatch.setattr('milieux.env.Environment.python_version', '3.11.2')
+        template_path = TEST_DATA_DIR / 'activate.jinja'
+        output_path = TEST_DATA_DIR / 'activate.out'
+        expected_output = output_path.read_text()
+        # render template to stdout
+        with redirect_stdout(StringIO()) as sio:
+            check_main(['env', 'template', name, '-t', str(template_path), '--extra-vars', 'CUSTOM_VAR=custom'])
+            assert sio.getvalue() == expected_output
+        # omit required extra variable
+        check_main(['env', 'template', name, '-t', str(template_path)], stderr="'CUSTOM_VAR' is undefined", success=False)
+        # render template as file
+        template_copy_path = tmp_config.base_dir_path / template_path.name
+        shutil.copy(template_path, template_copy_path)
+        output_copy_path = template_copy_path.with_suffix('.out')
+        msg = f'Rendered template {template_copy_path} to {output_copy_path}'
+        check_main(['env', 'template', name, '-t', str(template_copy_path), '--extra-vars', 'CUSTOM_VAR=custom', '--suffix', 'out'], stderr=msg)
+        assert output_copy_path.read_text() == expected_output.rstrip()
