@@ -20,7 +20,7 @@ dependencies = [
   "fancy_dataclass >= 0.6.1",
   "hatch",
   "jinja2",
-  "loguru",
+  "rich",
   "typing_extensions >= 4.10",
   "uv",
 ]

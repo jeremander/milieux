@@ -1,14 +1,15 @@
 from contextlib import contextmanager, nullcontext, redirect_stderr, redirect_stdout, suppress
 from io import StringIO
+import logging
 from pathlib import Path
 import re
 import sys
 from typing import Annotated, Callable, Optional, Union
 from unittest.mock import patch
 
-import loguru
 from typing_extensions import Doc
 
+from milieux import console, handler, logger
 from milieux.cli.main import MilieuxCLI
 
 
@@ -54,13 +55,19 @@ def check_main(
     stderr_ctx = nullcontext() if (stderr is None) else redirect_stderr(StringIO())
     with cli_args(*args), stdin_context, stdout_ctx as sio_out, stderr_ctx as sio_err:
         # capture logger output
-        sink_id = loguru.logger.add(sio_err) if sio_err else None
+        if sio_err:
+            console.file = sio_err
+            # rich logs output in a table with width determined by terminal, so we need to set width large enough to prevent line wrapping
+            width = console.width
+            console.width = 2_000
         try:
             MilieuxCLI.main()
         except SystemExit as e:
             assert success == (e.code == 0)  # noqa: PT017
         finally:
-            loguru.logger.remove(sink_id)
+            if sio_err:
+                console.file = sys.stderr
+                console.width = width
         flags = re.MULTILINE | re.DOTALL  # novermin
         if stdout is not None:
             assert sio_out is not None

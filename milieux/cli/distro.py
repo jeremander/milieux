@@ -6,6 +6,7 @@ from fancy_dataclass.cli import CLIDataclass
 
 from milieux.distro import Distro
 from milieux.errors import DistroExistsError
+from milieux.utils import NonemptyPrompt, distro_sty
 
 
 def _get_name_field(required: bool) -> Any:
@@ -51,7 +52,7 @@ class DistroLock(CLIDataclass, command_name='lock'):
             else:
                 new_name = self.new
             if (not self.force) and Distro(new_name).exists():
-                raise DistroExistsError(f'Distro {new_name!r} already exists')
+                raise DistroExistsError(f'Distro {distro_sty(new_name)} already exists')
         output = distro.lock(annotate=self.annotate)
         if self.new is None:  # print new file to stdout
             print(output)
@@ -79,8 +80,13 @@ class DistroNew(CLIDataclass, command_name='new'):
     force: bool = _force_field
 
     def run(self) -> None:
-        name = self.name or input('Name of distro: ')
-        Distro.new(name, packages=self.packages, requirements=self.requirements, distros=self.distros, force=self.force)
+        name = self.name or NonemptyPrompt.ask('Name of distro')
+        if (not self.packages) and (not self.requirements) and (not self.distros):
+            packages_str = NonemptyPrompt.ask('Packages to include (comma-separated)')
+            packages = [tok.strip() for tok in packages_str.split(',')]
+        else:
+            packages = self.packages
+        Distro.new(name, packages=packages, requirements=self.requirements, distros=self.distros, force=self.force)
 
 
 @dataclass

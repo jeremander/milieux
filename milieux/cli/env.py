@@ -7,6 +7,7 @@ from fancy_dataclass.cli import CLIDataclass
 
 from milieux.env import TEMPLATE_ENV_VARS, Environment
 from milieux.errors import NoSuchTemplateError, UserInputError
+from milieux.utils import NonemptyPrompt
 
 
 def _get_name_field(required: bool) -> Any:
@@ -42,32 +43,28 @@ class _EnvSubcommand(CLIDataclass):
 @dataclass
 class EnvSubcommand(_EnvSubcommand):
     """Base class for environment subcommands."""
-    name: Optional[str] = _get_name_field(required=True)
+    name: str = _get_name_field(required=True)
 
 
 @dataclass
 class EnvActivate(EnvSubcommand, command_name='activate'):
     """Activate an environment."""
-    name: Optional[str] = _get_name_field(required=True)
 
     def run(self) -> None:
-        name = self.name or input('Name of environment: ')
-        Environment(name).activate()
+        Environment(self.name).activate()
 
 
 @dataclass
 class EnvFreeze(EnvSubcommand, command_name='freeze'):
     """List installed packages in an environment."""
-    name: str = _get_name_field(required=True)
 
     def run(self) -> None:
         Environment(self.name).freeze()
 
 
 @dataclass
-class EnvInstall(_EnvSubcommand, command_name='install'):
+class EnvInstall(EnvSubcommand, command_name='install'):
     """Install packages into an environment."""
-    name: Optional[str] = _get_name_field(required=True)
     packages: list[str] = _packages_field
     requirements: list[str] = _requirements_field
     distros: list[str] = _distros_field
@@ -78,7 +75,6 @@ class EnvInstall(_EnvSubcommand, command_name='install'):
     )
 
     def run(self) -> None:
-        assert self.name is not None
         Environment(self.name).install(packages=self.packages, requirements=self.requirements, distros=self.distros, upgrade=self.upgrade, editable=self.editable)
 
 
@@ -91,7 +87,7 @@ class EnvList(_EnvSubcommand, command_name='list'):
 
 
 @dataclass
-class EnvNew(EnvSubcommand, command_name='new'):
+class EnvNew(_EnvSubcommand, command_name='new'):
     """Create a new environment."""
     name: Optional[str] = _get_name_field(required=False)
     seed: bool = field(
@@ -111,7 +107,7 @@ class EnvNew(EnvSubcommand, command_name='new'):
     )
 
     def run(self) -> None:
-        name = self.name or input('Name of environment: ')
+        name = self.name or NonemptyPrompt.ask('Name of environment')
         Environment.new(name, seed=self.seed, python=self.python, force=self.force)
 
 
@@ -127,7 +123,6 @@ class EnvRemove(EnvSubcommand, command_name='remove'):
 @dataclass
 class EnvShow(EnvSubcommand, command_name='show'):
     """Show info about an environment."""
-    name: str = _get_name_field(required=True)
     list_packages: bool = field(default=False, metadata={'help': 'include list of installed packages'})
 
     def run(self) -> None:
@@ -153,7 +148,8 @@ Run `milieux distro lock` to create one."""
         Environment(self.name).sync(requirements=self.requirements, distros=self.distros)
 
 
-_env_template_descr = 'Render one or more jinja templates, filling in variables from an environment.\n\nThe following variables from the environment may be used in {{ENV_VARIABLE}}\nexpressions within your template:\n'
+_env_template_descr_brief = 'render one or more jinja templates, filling in variables from an environment'
+_env_template_descr = f'{_env_template_descr_brief.capitalize()}.\n\nThe following variables from the environment may be used in {{ENV_VARIABLE}}\nexpressions within your template:\n'
 _env_template_descr += '\n'.join(f'\t{key}: {val}' for (key, val) in TEMPLATE_ENV_VARS.items())
 _env_template_descr += '\n\nExtra variables may be provided via the --extra-vars argument.'
 
@@ -161,6 +157,7 @@ _env_template_descr += '\n\nExtra variables may be provided via the --extra-vars
 class EnvTemplate(EnvSubcommand,
     command_name='template',
     formatter_class=RawDescriptionHelpFormatter,
+    help_descr_brief=_env_template_descr_brief,
     help_descr=_env_template_descr,
 ):
     """Render a template, filling in variables from an environment."""
@@ -204,15 +201,13 @@ class EnvTemplate(EnvSubcommand,
 
 
 @dataclass
-class EnvUninstall(_EnvSubcommand, command_name='uninstall'):
+class EnvUninstall(EnvSubcommand, command_name='uninstall'):
     """Uninstall packages from an environment."""
-    name: Optional[str] = _get_name_field(required=True)
     packages: list[str] = _packages_field
     requirements: list[str] = _requirements_field
     distros: list[str] = _distros_field
 
     def run(self) -> None:
-        assert self.name is not None
         Environment(self.name).uninstall(packages=self.packages, requirements=self.requirements, distros=self.distros)
 
 

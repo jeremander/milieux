@@ -2,10 +2,9 @@
 
 # TODO
 
-## v0.3.0
+## v0.2.1
 
 - Switch to `rich` for prompts, tables, etc.
-- Quiet/verbose mode for `uv` subcommands
 
 ## Future
 
@@ -46,6 +45,7 @@
         - `poetry` scaffolder?
             - Gracefully handle missing utility.
         - Extra dep. group `[scaffold]`, perhaps?
+- Quiet/verbose mode for `uv` subcommands
 - "Recipes" (in README)
     - create dev environment
     - activate/use dev environment (including someone else's)

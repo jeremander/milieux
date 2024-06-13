@@ -3,10 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 import shlex
 import subprocess
-import sys
 from typing import Any, Union
 
-from loguru import logger
+from rich.prompt import InvalidResponse, Prompt
+
+from milieux import console, logger
 
 
 AnyPath = Union[str, Path]
@@ -19,6 +20,11 @@ def run_command(cmd: list[Any], **kwargs: Any) -> subprocess.CompletedProcess[st
     logger.info(shlex.join(cmd))
     kwargs = {'text': True, **kwargs}  # use text mode by default
     return subprocess.run(cmd, **kwargs)
+
+
+############
+# FILE I/O #
+############
 
 def resolve_path(path: str, base_dir: Path) -> Path:
     """Attempts to resolve a path to an absolute path.
@@ -46,6 +52,39 @@ def read_lines(path: AnyPath) -> list[str]:
     """Reads lines of text from a file."""
     return Path(path).read_text().splitlines()
 
+
+##########
+# PROMPT #
+##########
+
+class NonemptyPrompt(Prompt):
+    """Subclass of rich.prompt.Prompt requiring the input to be non-empty."""
+
+    def process_response(self, value: str) -> str:  # noqa: D102
+        if not value.strip():
+            raise InvalidResponse(self.validate_error_message)
+        return super().process_response(value)
+
+
+########
+# TEXT #
+########
+
 def eprint(s: str, **kwargs: Any) -> None:
     """Prints a string to stderr."""
-    print(s, file=sys.stderr, **kwargs)
+    console.print(s, **kwargs)
+
+PALETTE = {
+    'distro': 'dark_orange3',
+    'env': 'green4',
+}
+
+def distro_sty(distro: str) -> str:
+    """Styles a distro name."""
+    color = PALETTE['distro']
+    return f'[bold {color}]{distro}[/]'
+
+def env_sty(env: str) -> str:
+    """Styles an environment name."""
+    color = PALETTE['env']
+    return f'[bold {color}]{env}[/]'

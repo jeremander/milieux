@@ -8,9 +8,8 @@ import traceback
 from typing import Optional, Union
 
 from fancy_dataclass import CLIDataclass
-from loguru import logger
 
-from milieux import PKG_NAME, PROG, __version__
+from milieux import PKG_NAME, PROG, __version__, logger
 from milieux.cli.config import ConfigCmd
 from milieux.cli.distro import DistroCmd
 from milieux.cli.env import EnvCmd
@@ -21,7 +20,7 @@ from milieux.errors import MilieuxError
 
 def _exit_with_error(msg: str) -> None:
     if msg:
-        logger.error(msg)
+        logger.error(f'[bold red]ERROR[/] - [red]{msg}[/]')
     sys.exit(1)
 
 def _handle_error(exc: BaseException) -> None:

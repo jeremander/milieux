@@ -42,7 +42,7 @@ pip install milieux
 
 - 🤵🏻‍♂️ [fancy_dataclass](https://fancy-dataclass.readthedocs.io/en/latest/), for configurations and argument parsing.
 
-- 🧘 [loguru](https://loguru.readthedocs.io/en/stable/), for logging output.
+- 💰 [rich](https://rich.readthedocs.io/en/stable/index.html), for text and table styling.
 
 ## Usage
 
