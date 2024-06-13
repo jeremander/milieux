@@ -3,10 +3,9 @@ from pathlib import Path
 from typing import Any, Union
 
 from fancy_dataclass import CLIDataclass
-from loguru import logger
+from rich.prompt import Confirm, Prompt
 
-from milieux import PROG
-from milieux.cli import yes_no_prompt
+from milieux import PROG, logger
 from milieux.config import Config, PipConfig, get_config_path, user_default_base_dir
 from milieux.errors import ConfigNotFoundError, UserInputError
 
@@ -25,22 +24,20 @@ class ConfigNew(CLIDataclass, command_name='new'):
         write = True
         if (not self.stdout) and path.exists():
             prompt = f'Config file {path} already exists. Overwrite?'
-            write = yes_no_prompt(prompt)
+            write = Confirm.ask(prompt)
         if not write:
             return
-        def prompt_for_dir(descr: str, default_dir: str) -> str:
-            return input(f'{descr} [{default_dir}]: ').strip() or default_dir
         default_base_dir = user_default_base_dir()
-        base_dir = prompt_for_dir('Base directory for workspace', str(default_base_dir))
+        base_dir = Prompt.ask('Base directory for workspace', default=str(default_base_dir)).strip()
         if not Path(base_dir).is_dir():
             # TODO: prompt for creation
             raise UserInputError(f'{base_dir} is not a valid directory')
         kwargs: dict[str, Any] = {'base_dir': base_dir}
         default_env_dir = Config.__dataclass_fields__['env_dir'].default
         assert isinstance(default_env_dir, str)
-        kwargs['env_dir'] = prompt_for_dir('Directory for env_dir', default_env_dir)
+        kwargs['env_dir'] = Prompt.ask('Directory for env_dir', default=default_env_dir).strip()
         # TODO: access ~/.pip/pip.conf to retrieve index_url if it exists
-        index_url = input('PyPI index URL (optional): ').strip() or None
+        index_url = Prompt.ask('PyPI index URL \[optional]').strip() or None
         kwargs['pip'] = PipConfig(index_url=index_url)
         cfg = Config(**kwargs)
         if self.stdout:

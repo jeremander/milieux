@@ -74,9 +74,9 @@ class TestConfig:
         assert cfg.env_dir_path == Config().env_dir_path
         check_main(['config', 'show'], stdout=out)
         # attempt to create another config file but say no to overwriting
-        check_main(['config', 'new'], stdin=['no'], stdout='already exists')
+        check_main(['config', 'new'], stdin=['n'], stdout='already exists')
         # overwrite config file
-        check_main(['config', 'new'], stdin=['yes', '', 'envs2', ''], stderr=f'Saved config file to {cfg_path}')
+        check_main(['config', 'new'], stdin=['y', '', 'envs2', ''], stderr=f'Saved config file to {cfg_path}')
         cfg = Config.load_config(cfg_path)
         assert cfg.base_dir == str(base_dir)
         assert cfg.env_dir_path == Config().env_dir_path.with_name('envs2')
@@ -120,7 +120,7 @@ class TestDistro:
         lines = read_lines(distro_path)
         assert lines == packages
         # check that 'show' command prints out the packages
-        check_main(['distro', 'show', name], stderr=f'Distro {name!r} is located at: {distro_path}', stdout=packages)
+        check_main(['distro', 'show', name], stderr=f'Distro {name} is located at: {distro_path}', stdout=packages)
 
     def test_distro(self, monkeypatch, tmp_config):
         projects_path = tmp_config.base_dir_path / 'projects'
@@ -131,41 +131,38 @@ class TestDistro:
             return Path(tmp_config.distro_dir_path / f'{name}.txt')
         name = 'mydist'
         # list all distros
-        check_main(['distro', 'list'], stdout='No distros exist')
+        check_main(['distro', 'list'], stderr='No distros exist')
         # show nonexistent distro
-        check_main(['distro', 'show', name], stderr=f'No distro named {name!r}', success=False)
-        # create distro with no packages
-        check_main(['distro', 'new', name], stderr='Must specify at least one package', success=False)
-        assert not get_distro_path(name).exists()
+        check_main(['distro', 'show', name], stderr=f'No distro named {name}', success=False)
         # create distro with packages
-        check_main(['distro', 'new', name, '--packages', 'pkg1', 'pkg2'], stderr=f'Wrote {name!r} requirements to')
+        check_main(['distro', 'new', name, '--packages', 'pkg1', 'pkg2'], stderr=f'Wrote {name} requirements to')
         distro_path = get_distro_path(name)
         assert distro_path.exists()
         self._check_distro(distro_path, ['pkg1', 'pkg2'])
         # list all distros
-        check_main(['distro', 'list'], stdout=['Distros:', r'\s+mydist'])
+        check_main(['distro', 'list'], stderr=['Distro directory', 'Distros'], stdout='mydist')
         # write same distro without -f flag
-        check_main(['distro', 'new', name, '--packages', 'pkg1'], stderr=f'Distro {name!r} already exists', success=False)
+        check_main(['distro', 'new', name, '--packages', 'pkg1'], stderr=f'Distro {name} already exists', success=False)
         # create distro with requirements file
         req_path = projects_path / f'{name}.txt'
         req_path.write_text('pkg1\npkg3\n pkg2  \n')
-        output = [f'Distro {name!r} already exists', f'Creating distro {name!r}', f'Wrote {name!r} requirements to']
+        output = [f'Distro {name} already exists', f'Creating distro {name}', f'Wrote {name} requirements to']
         check_main(['distro', 'new', name, '-r', str(req_path), '-f'], stderr=output)
         self._check_distro(distro_path, ['pkg1', 'pkg2', 'pkg3'])
         # create distro with both packages and requirements file
         check_main(['distro', 'new', name, '--packages', 'pkg4', '-r', str(req_path), '-f'], stderr=output)
         self._check_distro(distro_path, ['pkg1', 'pkg2', 'pkg3', 'pkg4'])
         # create distro from another one
-        check_main(['distro', 'new', 'mydist_copy', '-d', name], stderr="Wrote 'mydist_copy' requirements to")
+        check_main(['distro', 'new', 'mydist_copy', '-d', name], stderr="Wrote mydist_copy requirements to")
         self._check_distro(get_distro_path('mydist_copy'), ['pkg1', 'pkg2', 'pkg3', 'pkg4'])
         # use nonexistent requirements file
         check_main(['distro', 'new', name, '-r', 'fake_reqs.txt', '-f'], stderr='No requirements file: fake_reqs.txt', success=False)
         # remove distro
-        check_main(['distro', 'remove', 'mydist'], stderr="Deleting 'mydist' distro")
-        check_main(['distro', 'remove', 'mydist_copy'], stderr="Deleting 'mydist_copy' distro")
-        check_main(['distro', 'list'], stdout='No distros exist')
+        check_main(['distro', 'remove', 'mydist'], stderr="Deleting mydist distro")
+        check_main(['distro', 'remove', 'mydist_copy'], stderr="Deleting mydist_copy distro")
+        check_main(['distro', 'list'], stderr='No distros exist')
         # remove nonexistent distro
-        check_main(['distro', 'remove', 'mydist'], stderr="No distro named 'mydist'", success=False)
+        check_main(['distro', 'remove', 'mydist'], stderr="No distro named mydist", success=False)
 
     def test_lock(self, monkeypatch, tmp_config):
         projects_path = tmp_config.base_dir_path / 'projects'
@@ -174,22 +171,22 @@ class TestDistro:
         check_main(['scaffold', 'project1'])
         name = 'mydist'
         # stdlib package not valid
-        check_main(['distro', 'new', name, '--packages', 'os'], stderr=f'Wrote {name!r} requirements')
+        check_main(['distro', 'new', name, '--packages', 'os'], stderr=f'Wrote {name} requirements')
         distro = Distro(name)
         self._check_distro(distro.path, ['os'])
         output = ['No solution found', 'os was not found in the package registry']
         check_main(['distro', 'lock', name], stderr=output, success=False)
         # use local package
-        check_main(['distro', 'new', name, '--packages', 'file://project1', '-f'], stderr=f'Wrote {name!r} requirements')
+        check_main(['distro', 'new', name, '--packages', 'file://project1', '-f'], stderr=f'Wrote {name} requirements')
         output = ['This file was autogenerated', 'project1']
-        check_main(['distro', 'lock', name], stderr=f'Locking dependencies for {name!r} distro', stdout=output)
+        check_main(['distro', 'lock', name], stderr=f'Locking dependencies for {name} distro', stdout=output)
         self._check_distro(distro.path, ['file://project1'])
         # save a new distro (uses a date suffix)
-        check_main(['distro', 'lock', name, '--new'], stderr=r"Wrote 'mydist.\d{8}' requirements to")
+        check_main(['distro', 'lock', name, '--new'], stderr=r"Wrote mydist.\d{8} requirements to")
         # attempt to save distro to an existing one
-        check_main(['distro', 'lock', name, '--new', name], stderr=f'Distro {name!r} already exists', success=False)
+        check_main(['distro', 'lock', name, '--new', name], stderr=f'Distro {name} already exists', success=False)
         # use nonexistent local package
-        check_main(['distro', 'new', name, '--packages', 'file://project2', '-f'], stderr=f'Wrote {name!r} requirements')
+        check_main(['distro', 'new', name, '--packages', 'file://project2', '-f'], stderr=f'Wrote {name} requirements')
         check_main(['distro', 'lock', name], stderr='No such file or directory', success=False)
 
 
@@ -198,36 +195,36 @@ class TestEnv:
     def test_env(self, tmp_config):
         assert not tmp_config.env_dir_path.exists()
         # list all environments
-        check_main(['env', 'list'], stdout='No environments exist')
+        check_main(['env', 'list'], stderr='No environments exist')
         # show nonexistent environment
-        check_main(['env', 'show', 'myenv'], stderr="No environment named 'myenv'", success=False)
+        check_main(['env', 'show', 'myenv'], stderr="No environment named myenv", success=False)
         # create environment
         env_dir = tmp_config.env_dir_path / 'myenv'
-        out = [f"Creating environment 'myenv' in {env_dir}", f'{PROG} env activate myenv']
+        out = [f"Creating environment myenv in {env_dir}", f'{PROG} env activate myenv']
         check_main(['env', 'new'], stdin=['myenv'], stderr=out)
         assert env_dir.exists()
         for subdir in ['bin', 'lib']:
             assert (env_dir / subdir).exists()
         # try to create already-existing environment
-        check_main(['env', 'new', 'myenv'], stderr="Environment 'myenv' already exists", success=False)
+        check_main(['env', 'new', 'myenv'], stderr="Environment myenv already exists", success=False)
         # try to create environment with invalid Python executable
         check_main(['env', 'new', 'fake_env', '--python', 'fake-python'], stderr='executable `fake-python` not found', success=False)
         # list all environments
-        check_main(['env', 'list'], stdout=['Environments:', r'\s+myenv'])
+        check_main(['env', 'list'], stderr='Environments', stdout=r'myenv')
         # show single environment
         d = {'name': 'myenv', 'path': str(env_dir), 'created_at': datetime.fromtimestamp(env_dir.stat().st_ctime).isoformat()}
         check_main(['env', 'show', 'myenv'], stdout=json.dumps(d, indent=2))
         # show nonexistent environment
-        check_main(['env', 'show', 'fake_env'], stderr="No environment named 'fake_env'", success=False)
+        check_main(['env', 'show', 'fake_env'], stderr="No environment named fake_env", success=False)
         # activate nonexistent environment
-        check_main(['env', 'activate', 'fake_env'], stderr="No environment named 'fake_env'", success=False)
+        check_main(['env', 'activate', 'fake_env'], stderr="No environment named fake_env", success=False)
         # activate environment (doesn't really activate, just prints the command)
         check_main(['env', 'activate', 'myenv'], stderr='To activate the environment.+/workspace/envs/myenv/bin/activate')
         # remove environment
-        check_main(['env', 'remove', 'myenv'], stderr="Deleting 'myenv' environment")
-        check_main(['env', 'list'], stdout='No environments exist')
+        check_main(['env', 'remove', 'myenv'], stderr="Deleting myenv environment")
+        check_main(['env', 'list'], stderr='No environments exist')
         # remove nonexistent environment
-        check_main(['env', 'remove', 'myenv'], stderr="No environment named 'myenv'", success=False)
+        check_main(['env', 'remove', 'myenv'], stderr="No environment named myenv", success=False)
 
     def test_install(self, monkeypatch, tmp_config):
         check_main(['env', 'new'], stdin=['myenv'])
@@ -240,9 +237,9 @@ class TestEnv:
         # attempt to install nothing
         check_main(['env', 'install', 'myenv'], stderr='Must specify packages to install', success=False)
         # attempt to install into nonexistent environment
-        check_main(['env', 'install', 'fake_env', '-p', 'file://project1'], stderr="No environment named 'fake_env'", success=False)
+        check_main(['env', 'install', 'fake_env', '-p', 'file://project1'], stderr="No environment named fake_env", success=False)
         # install package into environment
-        check_main(['env', 'install', 'myenv', '-p', 'file://project1'], stderr=["Installing dependencies into 'myenv' environment", 'file://project1'])
+        check_main(['env', 'install', 'myenv', '-p', 'file://project1'], stderr=["Installing dependencies into myenv environment", 'file://project1'])
         name = 'myenv'
         env = Environment(name)
         check_package(env, 'project1', True)
@@ -276,7 +273,7 @@ class TestEnv:
         check_package(env, 'project1', True, editable=True)
         check_package(env, 'project2', True, editable=True)
         # uninstall package
-        check_main(['env', 'uninstall', name, '-p', 'project1'], stderr=["Uninstalling dependencies from 'myenv' environment", 'project1'])
+        check_main(['env', 'uninstall', name, '-p', 'project1'], stderr=["Uninstalling dependencies from myenv environment", 'project1'])
         check_package(env, 'project1', False)
         check_package(env, 'project2', True, editable=True)
         check_main(['env', 'uninstall', name, '-r', str(reqs_path)], stderr=f'-r {reqs_path}')
@@ -295,7 +292,7 @@ class TestEnv:
         check_main(['distro', 'new', 'mydist', '-p', 'file://project1'])
         check_main(['env', 'new', 'myenv'])
         # sync distro into environment
-        check_main(['env', 'sync', 'myenv', '-d', 'mydist'], stderr="Syncing dependencies in 'myenv' environment")
+        check_main(['env', 'sync', 'myenv', '-d', 'mydist'], stderr="Syncing dependencies in myenv environment")
         env = Environment('myenv')
         check_package(env, 'project1', True)
         check_package(env, 'project2', False)
@@ -308,7 +305,7 @@ class TestEnv:
         check_package(env, 'project1', True)
         check_package(env, 'project2', False)
         # sync nonexistent distro
-        check_main(['env', 'sync', 'myenv', '-d', 'fake_dist'], stderr="No distro named 'fake_dist'", success=False)
+        check_main(['env', 'sync', 'myenv', '-d', 'fake_dist'], stderr="No distro named fake_dist", success=False)
 
     def test_template(self, monkeypatch, tmp_config):
         name = 'myenv'

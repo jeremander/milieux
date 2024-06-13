@@ -10,14 +10,13 @@ from subprocess import CalledProcessError, CompletedProcess
 from typing import Annotated, Any, Optional
 
 import jinja2
-from loguru import logger
 from typing_extensions import Doc, Self
 
-from milieux import PROG
+from milieux import PROG, logger
 from milieux.config import get_config
 from milieux.distro import get_requirements
 from milieux.errors import EnvError, EnvironmentExistsError, MilieuxError, NoPackagesError, NoSuchEnvironmentError, TemplateError
-from milieux.utils import AnyPath, ensure_path, eprint, run_command
+from milieux.utils import AnyPath, ensure_path, env_sty, eprint, run_command
 
 
 def get_env_base_dir() -> Path:
@@ -171,8 +170,8 @@ class Environment:
         # instead, we just print out the command
         print(f'source {activate_path}')
         eprint('\nTo activate the environment, run the following shell command:\n')
-        eprint(f'source {activate_path}')
-        eprint('\nAlternatively, you can run (with backticks):\n')
+        eprint(f'source {activate_path}', highlight=False)
+        eprint('\nAlternatively, you can run (with backticks):\n', highlight=False)
         eprint(f'`{PROG} env activate {self.name}`')
         eprint('\nTo deactivate the environment, run:\n')
         eprint('deactivate\n')
@@ -190,13 +189,13 @@ class Environment:
         env_base_dir = get_env_base_dir()
         new_env_dir = env_base_dir / name
         if new_env_dir.exists():
-            msg = f'Environment {name!r} already exists'
+            msg = f'Environment {env_sty(name)} already exists'
             if force:
                 logger.warning(f'{msg} -- overwriting')
                 shutil.rmtree(new_env_dir)
             else:
                 raise EnvironmentExistsError(msg)
-        logger.info(f'Creating environment {name!r} in {new_env_dir}')
+        logger.info(f'Creating environment {env_sty(name)} in {new_env_dir}')
         new_env_dir.mkdir()
         cmd = ['uv', 'venv', new_env_dir]
         if seed:
@@ -209,9 +208,9 @@ class Environment:
             shutil.rmtree(new_env_dir)
             raise EnvError(e.stderr.rstrip()) from e
         lines = [line for line in res.stderr.splitlines() if not line.startswith('Activate')]
-        logger.info('\n'.join(lines))
+        eprint('\n'.join(lines), highlight=False)
         env = cls(name, env_base_dir)
-        logger.info(f'Activate with either of these commands:\n\tsource {env.activate_path}\n\t{PROG} env activate {name}')
+        logger.info(f'Activate with either of these commands:\n\tsource {env.activate_path}\n\t{PROG} env activate {name}', extra={'highlighter': None})
         return env
 
     def freeze(self) -> None:
@@ -230,7 +229,7 @@ class Environment:
     ) -> None:
         """Installs one or more packages into the environment."""
         _ = self.env_dir  # ensure environment exists
-        logger.info(f'Installing dependencies into {self.name!r} environment')
+        logger.info(f'Installing dependencies into {env_sty(self.name)} environment')
         cmd = self._install_or_uninstall_cmd(True, packages=packages, requirements=requirements, distros=distros, editable=editable)
         if upgrade:
             cmd.append('--upgrade')
@@ -241,7 +240,7 @@ class Environment:
     def remove(self) -> None:
         """Deletes the environment."""
         env_dir = self.env_dir
-        logger.info(f'Deleting {self.name!r} environment')
+        logger.info(f'Deleting {env_sty(self.name)} environment')
         shutil.rmtree(env_dir)
         logger.info(f'Deleted {env_dir}')
 
@@ -278,7 +277,7 @@ class Environment:
         reqs = get_requirements(requirements, distros)
         if not reqs:
             raise NoPackagesError('Must specify dependencies to sync')
-        logger.info(f'Syncing dependencies in {self.name!r} environment')
+        logger.info(f'Syncing dependencies in {env_sty(self.name)} environment')
         cmd = ['uv', 'pip', 'sync'] + reqs
         self.run_command(cmd)
 
@@ -290,7 +289,7 @@ class Environment:
     ) -> None:
         """Uninstalls one or more packages from the environment."""
         _ = self.env_dir  # ensure environment exists
-        logger.info(f'Uninstalling dependencies from {self.name!r} environment')
+        logger.info(f'Uninstalling dependencies from {env_sty(self.name)} environment')
         cmd = self._install_or_uninstall_cmd(False, packages=packages, requirements=requirements, distros=distros)
         self.run_command(cmd)
 
@@ -299,10 +298,11 @@ class Environment:
     def list(cls) -> None:
         """Prints the list of existing environments."""
         env_base_dir = get_env_base_dir()
-        print(f'Environment directory: {env_base_dir}')
-        envs = [p.name for p in env_base_dir.glob('*') if p.is_dir()]
+        eprint(f'Environment directory: {env_base_dir}')
+        envs = sorted([p.name for p in env_base_dir.glob('*') if p.is_dir()])
         if envs:
-            print('Environments:')
-            print('\n'.join(f'    {p}' for p in envs))
+            eprint('──────────────\n [bold]Environments[/]\n──────────────')
+            for env in envs:
+                print(env)
         else:
-            print('No environments exist.')
+            eprint('No environments exist.')

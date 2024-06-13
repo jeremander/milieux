@@ -4,12 +4,12 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import Annotated, Optional
 
-from loguru import logger
 from typing_extensions import Doc, Self
 
+from milieux import logger
 from milieux.config import get_config
 from milieux.errors import DistroExistsError, InvalidDistroError, NoPackagesError, NoSuchDistroError, NoSuchRequirementsFileError
-from milieux.utils import AnyPath, ensure_path, eprint, read_lines, run_command
+from milieux.utils import AnyPath, distro_sty, ensure_path, eprint, read_lines, run_command
 
 
 def get_distro_base_dir() -> Path:
@@ -77,7 +77,7 @@ class Distro:
     def lock(self, annotate: bool = False) -> str:
         """Locks the packages in a distro to their pinned versions.
         Returns the output as a string."""
-        logger.info(f'Locking dependencies for {self.name!r} distro')
+        logger.info(f'Locking dependencies for {self.name} distro')
         cmd = ['uv', 'pip', 'compile', str(self.path)]
         if not annotate:
             cmd.append('--no-annotate')
@@ -99,30 +99,30 @@ class Distro:
         distro_base_dir = get_distro_base_dir()
         distro_path = distro_base_dir / f'{name}.txt'
         if distro_path.exists():
-            msg = f'Distro {name!r} already exists'
+            msg = f'Distro {distro_sty(name)} already exists'
             if force:
                 logger.warning(f'{msg} -- overwriting')
                 distro_path.unlink()
             else:
                 raise DistroExistsError(msg)
-        logger.info(f'Creating distro {name!r}')
+        logger.info(f'Creating distro {distro_sty(name)}')
         with open(distro_path, 'w') as f:
             for pkg in packages:
                 print(pkg, file=f)
-        logger.info(f'Wrote {name!r} requirements to {distro_path}')
+        logger.info(f'Wrote {distro_sty(name)} requirements to {distro_path}')
         return cls(name, distro_base_dir)
 
     def remove(self) -> None:
         """Deletes the distro."""
         path = self.path
-        logger.info(f'Deleting {self.name!r} distro')
+        logger.info(f'Deleting {self.name} distro')
         path.unlink()
         logger.info(f'Deleted {path}')
 
     def show(self) -> None:
         """Prints out the packages in the distro."""
-        eprint(f'Distro {self.name!r} is located at: {self.path}')
-        eprint('Packages:\n')
+        eprint(f'Distro {distro_sty(self.name)} is located at: {self.path}')
+        eprint('──────────\n [bold]Packages[/]\n──────────')
         for pkg in self.get_packages():
             print(pkg)
 
@@ -131,10 +131,11 @@ class Distro:
     def list(cls) -> None:
         """Prints the list of existing distros."""
         distro_base_dir = get_distro_base_dir()
-        print(f'Distro directory: {distro_base_dir}')
-        distros = [p.stem for p in distro_base_dir.glob('*.txt') if p.is_file()]
+        eprint(f'Distro directory: {distro_base_dir}')
+        distros = sorted([p.stem for p in distro_base_dir.glob('*.txt') if p.is_file()])
         if distros:
-            print('Distros:')
-            print('\n'.join(f'    {p}' for p in distros))
+            eprint('─────────\n [bold]Distros[/]\n─────────')
+            for distro in distros:
+                print(distro)
         else:
-            print('No distros exist.')
+            eprint('No distros exist.')

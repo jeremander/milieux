@@ -5,8 +5,8 @@ import subprocess
 from typing import Literal
 
 from fancy_dataclass.cli import CLIDataclass
-from loguru import logger
 
+from milieux import logger
 from milieux.utils import run_command
 
 
