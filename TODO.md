@@ -42,6 +42,7 @@
         - Build a single site, or multiple sites for each project
     - `scaffold`
         - Support `cookiecutter` or some means of custom scaffolding
+        - Interactive `-i` flag
         - `poetry` scaffolder?
             - Gracefully handle missing utility.
         - Extra dep. group `[scaffold]`, perhaps?

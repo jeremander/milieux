@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass, field
 from pathlib import Path
 import sys
@@ -9,7 +10,7 @@ from typing import Optional, Union
 from fancy_dataclass import CLIDataclass
 from loguru import logger
 
-from milieux import PKG_NAME
+from milieux import PKG_NAME, PROG, __version__
 from milieux.cli.config import ConfigCmd
 from milieux.cli.distro import DistroCmd
 from milieux.cli.env import EnvCmd
@@ -40,13 +41,16 @@ def _handle_error(exc: BaseException) -> None:
 @dataclass
 class MilieuxCLI(CLIDataclass):
     """Tool to assist in developing, building, and installing Python packages."""
-    # TODO: use RawDescriptionHelpFormatter, once CLIDataclass supports that
-    subcommand: Union[
+    subcommand: Optional[Union[
         ConfigCmd,
         DistroCmd,
         EnvCmd,
         ScaffoldCmd,
-     ] = field(metadata={'subcommand': True})
+     ]] = field(default=None, metadata={'subcommand': True})
+    version: bool = field(
+        default=False,
+        metadata={'help': 'show the version number and exit'}
+    )
     config: Optional[Path] = field(
         default=None,
         metadata={'args': ['-c', '--config'], 'help': 'path to TOML config file'}
@@ -68,8 +72,20 @@ class MilieuxCLI(CLIDataclass):
         except ValueError as e:
             _exit_with_error(f'Invalid config file {config_path}: {e}')
 
+    def print_version(self) -> None:
+        """Prints the version string."""
+        print(f'{PROG} {__version__}')
+
+    @classmethod
+    def process_args(cls, parser: ArgumentParser, args: Namespace) -> None:  # noqa: D102
+        if (not args.version) and (not getattr(args, cls.subcommand_dest_name)):
+            parser.error('the following arguments are required: subcommand')
+
     def run(self) -> None:
         """Top-level CLI app for milieux."""
+        if self.version:
+            self.print_version()
+            sys.exit(0)
         self._load_config()
         super().run()
 

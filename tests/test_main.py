@@ -7,7 +7,7 @@ import shutil
 import subprocess
 from typing import get_args, get_type_hints
 
-from milieux import PROG
+from milieux import PROG, __version__
 from milieux.cli.main import MilieuxCLI
 from milieux.config import Config, user_default_base_dir, user_default_config_path
 from milieux.distro import Distro
@@ -25,11 +25,19 @@ def test_main_help():
     """Tests running the main program with --help."""
     check_main(['--help'], stdout='--help')
 
+def test_main_version():
+    """Tests running the main program with --version."""
+    version_str = f'{PROG} {__version__}'
+    check_main(['--version'], stdout=version_str)
+    check_main(['--version', 'config', 'show'], stdout=version_str)
+    check_main(['config', 'show', '--version'], stderr='unrecognized arguments: --version', success=False)
+
 def test_subcommand_help():
     """Tests running each of the subcommands with --help."""
     for subcmd in get_args(get_type_hints(MilieuxCLI)['subcommand']):
-        cmd_name = subcmd.__settings__.command_name
-        check_main([cmd_name, '--help'], stdout=[cmd_name, '--help'])
+        if subcmd is not type(None):
+            cmd_name = subcmd.__settings__.command_name
+            check_main([cmd_name, '--help'], stdout=[cmd_name, '--help'])
 
 def check_package(env: Environment, pkg_name: str, exists: bool, editable: bool = False) -> None:
     glob = env.site_packages_dir.glob(f'{pkg_name}*.dist-info' if editable else pkg_name)
