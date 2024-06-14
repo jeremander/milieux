@@ -77,7 +77,7 @@ class Distro:
     def lock(self, annotate: bool = False) -> str:
         """Locks the packages in a distro to their pinned versions.
         Returns the output as a string."""
-        logger.info(f'Locking dependencies for {self.name} distro')
+        logger.info(f'Locking dependencies for {distro_sty(self.name)} distro')
         cmd = ['uv', 'pip', 'compile', str(self.path)]
         if not annotate:
             cmd.append('--no-annotate')
@@ -115,7 +115,7 @@ class Distro:
     def remove(self) -> None:
         """Deletes the distro."""
         path = self.path
-        logger.info(f'Deleting {self.name} distro')
+        logger.info(f'Deleting {distro_sty(self.name)} distro')
         path.unlink()
         logger.info(f'Deleted {path}')
 
