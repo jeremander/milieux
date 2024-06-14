@@ -7,6 +7,7 @@ import sys
 from typing import Annotated, Callable, Optional, Union
 from unittest.mock import patch
 
+from rich.console import Console
 from typing_extensions import Doc
 
 from milieux import console, handler, logger

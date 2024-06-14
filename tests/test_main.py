@@ -3,6 +3,7 @@ from datetime import datetime
 from io import StringIO
 import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 from typing import get_args, get_type_hints
@@ -27,9 +28,9 @@ def test_main_help():
 
 def test_main_version():
     """Tests running the main program with --version."""
-    version_str = f'{PROG} {__version__}'
-    check_main(['--version'], stdout=version_str)
-    check_main(['--version', 'config', 'show'], stdout=version_str)
+    version = re.escape(__version__)
+    check_main(['--version'], stdout=version)
+    check_main(['--version', 'config', 'show'], stdout=version)
     check_main(['config', 'show', '--version'], stderr='unrecognized arguments: --version', success=False)
 
 def test_subcommand_help():

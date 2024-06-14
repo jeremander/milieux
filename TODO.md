@@ -2,16 +2,13 @@
 
 # TODO
 
-## v0.2.1
-
-- Switch to `rich` for prompts, tables, etc.
-
 ## Future
 
 - Subcommands
     - Build/publish
         - May just be thin wrappers for `hatch`?
         - Or could build wheels for entire distro and upload them all
+            - use `pip wheel -r <distro>` to do this
             - `uv` does not yet seem to replace `pip wheel`
         - `build`
             - Build `sdist` or `wheel`
@@ -46,6 +43,7 @@
             - Gracefully handle missing utility.
         - Extra dep. group `[scaffold]`, perhaps?
 - Quiet/verbose mode for `uv` subcommands
+- Tab completion?
 - "Recipes" (in README)
     - create dev environment
     - activate/use dev environment (including someone else's)

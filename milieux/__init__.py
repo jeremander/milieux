@@ -21,7 +21,7 @@ LOG_FMT = '- %(message)s'
 DATE_FMT = '%Y-%m-%d %H:%M:%S'
 theme = Theme({'log.time': 'cyan'})
 
-console = Console(stderr=True, theme=theme)  # type: ignore[arg-type]
+console = Console(stderr=True, theme=theme)
 handler = RichHandler(
     omit_repeated_times=False,
     show_level=False,
