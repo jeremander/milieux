@@ -120,7 +120,7 @@ class Environment:
     def run_command(self, cmd: list[str], **kwargs: Any) -> CompletedProcess[str]:
         """Runs a command with the VIRTUAL_ENV environment variable set."""
         cmd_env = {**os.environ, 'VIRTUAL_ENV': str(self.env_dir)}
-        return run_command(cmd, env=cmd_env, **kwargs)
+        return run_command(cmd, env=cmd_env, check=True, **kwargs)
 
     def get_installed_packages(self) -> list[str]:
         """Gets a list of installed packages in the environment."""
@@ -279,6 +279,9 @@ class Environment:
             raise NoPackagesError('Must specify dependencies to sync')
         logger.info(f'Syncing dependencies in {env_sty(self.name)} environment')
         cmd = ['uv', 'pip', 'sync'] + reqs
+        cfg = get_config()
+        if (index_url := cfg.pip.index_url):
+            cmd.extend(['--index-url', index_url])
         self.run_command(cmd)
 
     def uninstall(

@@ -22,7 +22,7 @@ dependencies = [
   "jinja2",
   "rich",
   "typing_extensions >= 4.10",
-  "uv",
+  "uv >= 0.2.29",
 ]
 
 [tool.hatch.metadata]

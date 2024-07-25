@@ -197,7 +197,7 @@ class TestDistro:
         check_main(['distro', 'lock', name, '--new', name], stderr=f'Distro {name} already exists', success=False)
         # use nonexistent local package
         check_main(['distro', 'new', name, '--packages', 'file://project2', '-f'], stderr=f'Wrote {name} requirements')
-        check_main(['distro', 'lock', name], stderr='No such file or directory', success=False)
+        check_main(['distro', 'lock', name], stderr='Distribution not found at', success=False)
 
 
 class TestEnv:
@@ -218,7 +218,7 @@ class TestEnv:
         # try to create already-existing environment
         check_main(['env', 'new', 'myenv'], stderr="Environment myenv already exists", success=False)
         # try to create environment with invalid Python executable
-        check_main(['env', 'new', 'fake_env', '--python', 'fake-python'], stderr='executable `fake-python` not found', success=False)
+        check_main(['env', 'new', 'fake_env', '--python', 'fake-python'], stderr='No interpreter found for executable name `fake-python`', success=False)
         # list all environments
         check_main(['env', 'list'], stderr='Environments', stdout=r'myenv')
         # show single environment
@@ -290,9 +290,9 @@ class TestEnv:
         check_package(env, 'project1', False)
         check_package(env, 'project2', False)
         # uninstall nonexistent package
-        check_main(['env', 'uninstall', name, '-p', 'project3'], stderr='project3', success=False)
+        check_main(['env', 'uninstall', name, '-p', 'project3'], stderr='project3')
 
-    def test_sync(self, monkeypatch, tmp_config):
+    def test_sync(self, monkeypatch, tmp_config, tmpdir):
         # create two local packages, for test installations
         projects_path = tmp_config.base_dir_path / 'projects'
         projects_path.mkdir()
@@ -316,6 +316,13 @@ class TestEnv:
         check_package(env, 'project2', False)
         # sync nonexistent distro
         check_main(['env', 'sync', 'myenv', '-d', 'fake_dist'], stderr="No distro named fake_dist", success=False)
+        # sync with custom index URL
+        cfg = Config()
+        cfg.pip.index_url = 'fake-url'
+        fake_config = tmpdir / 'config.toml'
+        cfg.save(fake_config)
+        with cfg.as_config():
+            check_main(['-c', str(fake_config), 'env', 'sync', 'myenv', '-d', 'mydist'], stderr='--index-url fake-url', success=False)
 
     def test_template(self, monkeypatch, tmp_config):
         name = 'myenv'

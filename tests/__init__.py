@@ -65,6 +65,10 @@ def check_main(
             MilieuxCLI.main()
         except SystemExit as e:
             assert success == (e.code == 0)  # noqa: PT017
+        except Exception:
+            assert not success
+        else:
+            assert success
         finally:
             if sio_err:
                 console.file = sys.stderr
