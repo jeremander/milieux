@@ -7,7 +7,7 @@ from rich.prompt import Confirm, Prompt
 
 from milieux import PROG, logger
 from milieux.config import Config, PipConfig, get_config_path, user_default_base_dir
-from milieux.errors import ConfigNotFoundError, UserInputError
+from milieux.errors import ConfigNotFoundError
 
 
 @dataclass
@@ -29,9 +29,14 @@ class ConfigNew(CLIDataclass, command_name='new'):
             return
         default_base_dir = user_default_base_dir()
         base_dir = Prompt.ask('Base directory for workspace', default=str(default_base_dir)).strip()
-        if not Path(base_dir).is_dir():
-            # TODO: prompt for creation
-            raise UserInputError(f'{base_dir} is not a valid directory')
+        if not (p := Path(base_dir)).is_dir():
+            prompt = f'Directory {p} does not exist. Create it?'
+            create = Confirm.ask(prompt)
+            if create:
+                p.mkdir(parents=True)
+                logger.info(f'Created directory {p}')
+            else:
+                return
         kwargs: dict[str, Any] = {'base_dir': base_dir}
         default_env_dir = Config.__dataclass_fields__['env_dir'].default
         assert isinstance(default_env_dir, str)

@@ -65,7 +65,7 @@ class TestConfig:
 
     def test_config_new(self, tmp_config):
         cfg_path = user_default_config_path()
-        user_default_config_path().unlink()  # delete config file
+        cfg_path.unlink()  # delete config file
         base_dir = user_default_base_dir()
         assert base_dir.exists()
         check_main(['config', 'new'], stdin=['', '', ''], stderr=f'Saved config file to {cfg_path}')
@@ -81,6 +81,15 @@ class TestConfig:
         cfg = Config.load_config(cfg_path)
         assert cfg.base_dir == str(base_dir)
         assert cfg.env_dir_path == Config().env_dir_path.with_name('envs2')
+        # attempt to create config file when base directory does not exist
+        cfg_path.unlink()
+        shutil.rmtree(base_dir)
+        check_main(['config', 'new'], stdin=['', 'n'])
+        assert not cfg_path.exists()
+        assert not base_dir.exists()
+        check_main(['config', 'new'], stdin=['', 'y', '', ''], stderr=f'Created directory {base_dir}')
+        assert base_dir.exists()
+        assert cfg_path.exists()
 
     def test_config_path(self, tmp_config):
         cfg_path = user_default_config_path()
