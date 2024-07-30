@@ -53,7 +53,7 @@ dependencies = [
 
 [tool.hatch.envs.lint.scripts]
 # linting
-run-ruff = "ruff check"
+run-ruff = "ruff check {args:milieux tests}"
 # ensure compatibility with Py3.9 and higher
 run-vermin = "vermin {args:.}"
 # type-checking

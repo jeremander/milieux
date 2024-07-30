@@ -148,7 +148,7 @@ class Environment:
         """Installs one or more packages into the environment."""
         operation = 'install' if install else 'uninstall'
         reqs = get_requirements(requirements, distros)
-        if (not editable) and (not packages) and (not requirements):
+        if (not editable) and (not packages) and (not reqs):
             raise NoPackagesError(f'Must specify packages to {operation}')
         cmd = ['uv', 'pip', operation]
         cfg = get_config()
@@ -157,7 +157,7 @@ class Environment:
         # TODO: extra index URLs?
         if packages:
             cmd.extend(packages)
-        if requirements:
+        if reqs:
             cmd.extend(['-r'] + reqs)
         return cmd
 
