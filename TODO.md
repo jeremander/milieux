@@ -2,6 +2,10 @@
 
 # TODO
 
+- Latest `uv new` for new project (add to `milieux scaffold`)
+- Support `extra_index_url` config variable
+    - Note: `UV_*` env vars are supported automatically
+
 ## Future
 
 - Subcommands

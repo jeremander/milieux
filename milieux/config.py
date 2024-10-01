@@ -98,3 +98,9 @@ def get_config() -> Config:
         set_config_path(config_path)
         cfg.update_config()
     return cfg
+
+def update_command_with_index_url(cmd: list[str]) -> None:
+    """Given a `uv` command (list of arguments), if the globally configured `index_url` is set, adds a corresponding `--index-url` argument, in-place."""
+    cfg = get_config()
+    if (index_url := cfg.pip.index_url):
+        cmd.extend(['--index-url', index_url])
