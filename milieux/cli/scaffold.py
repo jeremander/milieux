@@ -11,7 +11,7 @@ from milieux.utils import run_command
 
 
 # utility for scaffolding
-ScaffoldUtility = Literal['hatch']
+ScaffoldUtility = Literal['hatch', 'uv']
 
 
 class Scaffolder(ABC):
@@ -34,8 +34,21 @@ class HatchScaffolder(Scaffolder):
         run_command(cmd)
 
 
+class UVScaffolder(Scaffolder):
+    """Project scaffolder that uses the 'uv' command-line tool."""
+
+    def make_scaffold(self, base_dir: Path, project_name: str) -> None:  # noqa: D102
+        location = base_dir / project_name
+        if not location.exists():
+            logger.info(f'mkdir {location}')
+            location.mkdir()
+        cmd = ['uv', 'init', '--directory', str(location), '--verbose']
+        run_command(cmd)
+
+
 SCAFFOLDERS = {
     'hatch': HatchScaffolder,
+    'uv': UVScaffolder,
 }
 
 

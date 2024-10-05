@@ -8,6 +8,8 @@ import shutil
 import subprocess
 from typing import get_args, get_type_hints
 
+import pytest
+
 from milieux import PROG, __version__
 from milieux.cli.main import MilieuxCLI
 from milieux.config import Config, user_default_base_dir, user_default_config_path
@@ -112,12 +114,14 @@ class TestConfig:
 
 class TestScaffold:
 
-    def test_scaffold(self, monkeypatch, tmp_config):
+    @pytest.mark.parametrize('utility', ['hatch', 'uv'])
+    def test_scaffold(self, monkeypatch, tmp_config, utility):
         # set up a new project
         projects_path = tmp_config.base_dir_path / 'projects'
         projects_path.mkdir()
         monkeypatch.chdir(projects_path)
-        check_main(['scaffold', 'my_project'], stderr="Creating new project 'my_project' with 'hatch' utility")
+        cmd = ['scaffold', 'my_project', '--utility', utility]
+        check_main(cmd, stderr=f"Creating new project 'my_project' with '{utility}' utility")
         project_path = projects_path / 'my_project'
         assert project_path.is_dir()
         assert (project_path / 'README.md').exists()
