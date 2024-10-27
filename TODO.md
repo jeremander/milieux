@@ -4,6 +4,11 @@
 
 - Support `extra_index_url` config variable
     - Note: `UV_*` env vars are supported automatically
+- `docs`
+    - Enable package-specific customization, e.g. different docstring styles.
+    - Enable PEP 727 Annotated/Doc annotations
+    - Nav sidebar has flat structure showing all modules -- can it be made hierarchical?
+    - Edit index.html.jinja2 for custom landing page
 
 ## Future
 
@@ -36,9 +41,6 @@
         - Compute source metrics for a distro
     - `deps`
         - Analyze dependency graph
-    - `docs`
-        - `sphinx` or `mkdocs`
-        - Build a single site, or multiple sites for each project
     - `scaffold`
         - Support `cookiecutter` or some means of custom scaffolding
         - Interactive `-i` flag

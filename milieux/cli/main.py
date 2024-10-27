@@ -11,7 +11,7 @@ from fancy_dataclass import CLIDataclass
 from milieux import PROG, __version__, logger
 from milieux.cli.config import ConfigCmd
 from milieux.cli.distro import DistroCmd
-from milieux.cli.doc import BuildDocsCmd
+from milieux.cli.doc import DocCmd
 from milieux.cli.env import EnvCmd
 from milieux.cli.scaffold import ScaffoldCmd
 from milieux.config import Config, set_config_path, user_default_config_path
@@ -41,9 +41,9 @@ def _handle_error(exc: BaseException) -> None:
 class MilieuxCLI(CLIDataclass, version=f'%(prog)s {__version__}'):
     """Tool to assist in developing, building, and installing Python packages."""
     subcommand: Union[
-        BuildDocsCmd,
         ConfigCmd,
         DistroCmd,
+        DocCmd,
         EnvCmd,
         ScaffoldCmd,
      ] = field(metadata={'subcommand': True})
