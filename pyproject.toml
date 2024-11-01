@@ -20,7 +20,7 @@ dependencies = [
   "fancy_dataclass >= 0.7.3",
   "hatch",
   "jinja2",
-  "pydoc",
+  "pdoc",
   "rich",
   "typing_extensions >= 4.10",
   "uv >= 0.2.29",
@@ -45,7 +45,7 @@ path = "milieux/__init__.py"
 
 [tool.hatch.envs.lint]
 dependencies = [
-  "mypy>=1.0",
+  "mypy>=1.13",
   "py-gadzooks>=0.2.9",
   "ruff>=0.3",
   "pytest-mypy",
@@ -120,6 +120,10 @@ strict = true
 module = "tests.*"
 strict = false
 disable_error_code = ["attr-defined", "no-untyped-call", "no-untyped-def"]
+
+[[tool.mypy.overrides]]
+module = "milieux.cli.doc"
+disable_error_code = ["import-not-found", "method-assign"]
 
 [tool.pytest.ini_options]
 addopts = "--verbose --durations=10 --cov=milieux --cov-config pyproject.toml"
