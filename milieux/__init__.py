@@ -8,7 +8,7 @@ from rich.logging import RichHandler
 from rich.theme import Theme
 
 
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 
 # name of the main executable
 PROG = 'milieux'

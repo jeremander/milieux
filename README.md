@@ -42,6 +42,8 @@ pip install milieux
 
 - 🤵🏻‍♂️ [fancy_dataclass](https://fancy-dataclass.readthedocs.io/en/latest/), for configurations and argument parsing.
 
+- 📄 [pdoc](https://pdoc.dev/docs/pdoc.html), for documentation generation.
+
 - 💰 [rich](https://rich.readthedocs.io/en/stable/index.html), for text and table styling.
 
 ## Usage
@@ -173,6 +175,24 @@ The command above will create a new project in a `my_project` subdirectory.
 The `--utility` argument lets you specify the utility for creating the project scaffold.
 
 🚧 At present, the only supported scaffold utility is [hatch](https://hatch.pypa.io/latest). In the future we plan to support arbitrary project templates via [jinja](https://jinja.palletsprojects.com/en/3.1.x/) and/or [cookiecutter](https://cookiecutter.readthedocs.io/en/stable/).
+
+### `doc`: Create API reference documentation
+
+`milieux doc` builds API reference documentation for one or more packages.
+
+**Example**: build docs for all packages in a distro, saving them to a `docs/` directory:
+
+```shell
+milieux doc build -d my_distro -o docs`
+```
+
+**Example**: serve documentation on `localhost` for a single package:
+
+```shell
+milieux doc serve -p my_package
+```
+
+This uses the [pdoc](https://pdoc.dev/docs/pdoc.html) library to generate documentation. At present, `milieux` does not expose much in the way of customization, but perhaps it will in the future.
 
 ### `config`: Manage configurations
 
