@@ -23,7 +23,7 @@ dependencies = [
   "pdoc",
   "rich",
   "typing_extensions >= 4.10",
-  "uv >= 0.2.29",
+  "uv >= 0.5.16",
 ]
 
 [tool.hatch.metadata]

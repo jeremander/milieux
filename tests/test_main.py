@@ -326,7 +326,8 @@ class TestEnv:
         fake_config = tmpdir / 'config.toml'
         cfg.save(fake_config)
         with cfg.as_config():
-            check_main(['-c', str(fake_config), 'env', 'sync', 'myenv', '-d', 'mydist'], stderr='--index-url fake-url', success=False)
+            # invalid --index-url seems to be ignored by uv
+            check_main(['-c', str(fake_config), 'env', 'sync', 'myenv', '-d', 'mydist'], stderr='--index-url fake-url', success=True)
 
     def test_template(self, monkeypatch, tmp_config):
         name = 'myenv'
