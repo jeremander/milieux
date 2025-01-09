@@ -1,7 +1,5 @@
 import logging
 from pathlib import Path
-import sys
-from typing import Any
 
 from rich.console import Console
 from rich.logging import RichHandler

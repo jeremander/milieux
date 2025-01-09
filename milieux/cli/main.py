@@ -77,7 +77,7 @@ class MilieuxCLI(CLIDataclass, version=f'%(prog)s {__version__}'):
     def main(cls, arg_list: Optional[list[str]] = None) -> None:
         """Add custom error handling to main function to exit gracefully when possible."""
         try:
-            super().main()  # delegate to subcommand
+            super().main(arg_list=arg_list)  # delegate to subcommand
         except BaseException as exc:
             _handle_error(exc)
 
