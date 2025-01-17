@@ -1,6 +1,18 @@
+import os
 import sys
 
-from milieux.env import Environment
+from milieux.env import Environment, get_active_environment, get_env_base_dir
+
+
+def test_get_active_environment(monkeypatch, tmp_config):
+    base_dir = get_env_base_dir()
+    assert get_active_environment() is None
+    monkeypatch.setitem(os.environ, 'VIRTUAL_ENV', '')
+    assert get_active_environment() is None
+    monkeypatch.setitem(os.environ, 'VIRTUAL_ENV', 'myenv')
+    assert get_active_environment() is None
+    monkeypatch.setitem(os.environ, 'VIRTUAL_ENV', str(base_dir / 'myenv'))
+    assert get_active_environment() == Environment('myenv', base_dir)
 
 
 def test_template(monkeypatch, tmp_config):

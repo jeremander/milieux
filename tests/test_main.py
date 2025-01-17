@@ -2,6 +2,7 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from io import StringIO
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -196,7 +197,7 @@ class TestDistro:
         check_main(['distro', 'lock', name], stderr=f'Locking dependencies for {name} distro', stdout=output)
         self._check_distro(distro.path, ['file://project1'])
         # save a new distro (uses a date suffix)
-        check_main(['distro', 'lock', name, '--new'], stderr=r"Wrote mydist.\d{8} requirements to")
+        check_main(['distro', 'lock', name, '--new'], stderr=r'Wrote mydist.\d{8} requirements to')
         # attempt to save distro to an existing one
         check_main(['distro', 'lock', name, '--new', name], stderr=f'Distro {name} already exists', success=False)
         # use nonexistent local package
@@ -206,12 +207,12 @@ class TestDistro:
 
 class TestEnv:
 
-    def test_env(self, tmp_config):
+    def test_env(self, monkeypatch, tmp_config):
         assert not tmp_config.env_dir_path.exists()
         # list all environments
         check_main(['env', 'list'], stderr='No environments exist')
         # show nonexistent environment
-        check_main(['env', 'show', 'myenv'], stderr="No environment named myenv", success=False)
+        check_main(['env', 'show', 'myenv'], stderr='No environment named myenv', success=False)
         # create environment
         env_dir = tmp_config.env_dir_path / 'myenv'
         out = [f"Creating environment myenv in {env_dir}", f'{PROG} env activate myenv']
@@ -220,7 +221,7 @@ class TestEnv:
         for subdir in ['bin', 'lib']:
             assert (env_dir / subdir).exists()
         # try to create already-existing environment
-        check_main(['env', 'new', 'myenv'], stderr="Environment myenv already exists", success=False)
+        check_main(['env', 'new', 'myenv'], stderr='Environment myenv already exists', success=False)
         # try to create environment with invalid Python executable
         check_main(['env', 'new', 'fake_env', '--python', 'fake-python'], stderr='No interpreter found for executable name `fake-python`', success=False)
         # list all environments
@@ -228,17 +229,23 @@ class TestEnv:
         # show single environment
         d = {'name': 'myenv', 'path': str(env_dir), 'created_at': datetime.fromtimestamp(env_dir.stat().st_ctime).isoformat()}
         check_main(['env', 'show', 'myenv'], stdout=json.dumps(d, indent=2))
+        check_main(['env', 'show'], stderr='Not currently in an environment', success=False)
+        # simulate being in an environment via VIRTUAL_ENV variable
+        monkeypatch.setitem(os.environ, 'VIRTUAL_ENV', str(tmp_config.env_dir_path / 'myenv'))
+        check_main(['env', 'show'], stdout=json.dumps(d, indent=2))
+        monkeypatch.setitem(os.environ, 'VIRTUAL_ENV', 'venv')
+        check_main(['env', 'show'], stderr='Not currently in an environment', success=False)
         # show nonexistent environment
-        check_main(['env', 'show', 'fake_env'], stderr="No environment named fake_env", success=False)
+        check_main(['env', 'show', 'fake_env'], stderr='No environment named fake_env', success=False)
         # activate nonexistent environment
-        check_main(['env', 'activate', 'fake_env'], stderr="No environment named fake_env", success=False)
+        check_main(['env', 'activate', 'fake_env'], stderr='No environment named fake_env', success=False)
         # activate environment (doesn't really activate, just prints the command)
         check_main(['env', 'activate', 'myenv'], stderr='To activate the environment.+/workspace/envs/myenv/bin/activate')
         # remove environment
-        check_main(['env', 'remove', 'myenv'], stderr="Deleting myenv environment")
+        check_main(['env', 'remove', 'myenv'], stderr='Deleting myenv environment')
         check_main(['env', 'list'], stderr='No environments exist')
         # remove nonexistent environment
-        check_main(['env', 'remove', 'myenv'], stderr="No environment named myenv", success=False)
+        check_main(['env', 'remove', 'myenv'], stderr='No environment named myenv', success=False)
 
     def test_install(self, monkeypatch, tmp_config):
         check_main(['env', 'new'], stdin=['myenv'])
