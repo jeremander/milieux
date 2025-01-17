@@ -53,7 +53,7 @@ class PipConfig(TOMLDataclass):
 
 
 @dataclass
-class Config(ConfigDataclass, TOMLDataclass):  # type: ignore[misc]
+class Config(ConfigDataclass, TOMLDataclass):
     """Configurations for milieux."""
     base_dir: Annotated[
         str,

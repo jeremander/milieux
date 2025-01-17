@@ -5,8 +5,9 @@ from typing import Any, Optional, Union
 
 from fancy_dataclass.cli import CLIDataclass
 
-from milieux.env import TEMPLATE_ENV_VARS, Environment
-from milieux.errors import NoSuchTemplateError, UserInputError
+from milieux import PROG
+from milieux.env import TEMPLATE_ENV_VARS, Environment, get_active_environment
+from milieux.errors import EnvError, NoSuchTemplateError, UserInputError
 from milieux.utils import NonemptyPrompt
 
 
@@ -43,7 +44,7 @@ class _EnvSubcommand(CLIDataclass):
 @dataclass
 class EnvSubcommand(_EnvSubcommand):
     """Base class for environment subcommands."""
-    name: str = _get_name_field(required=True)
+    name: Optional[str] = _get_name_field(required=True)
 
 
 @dataclass
@@ -51,6 +52,7 @@ class EnvActivate(EnvSubcommand, command_name='activate'):
     """Activate an environment."""
 
     def run(self) -> None:
+        assert self.name is not None
         Environment(self.name).activate()
 
 
@@ -59,6 +61,7 @@ class EnvFreeze(EnvSubcommand, command_name='freeze'):
     """List installed packages in an environment."""
 
     def run(self) -> None:
+        assert self.name is not None
         Environment(self.name).freeze()
 
 
@@ -75,6 +78,7 @@ class EnvInstall(EnvSubcommand, command_name='install'):
     )
 
     def run(self) -> None:
+        assert self.name is not None
         Environment(self.name).install(packages=self.packages, requirements=self.requirements, distros=self.distros, upgrade=self.upgrade, editable=self.editable)
 
 
@@ -123,10 +127,17 @@ class EnvRemove(EnvSubcommand, command_name='remove'):
 @dataclass
 class EnvShow(EnvSubcommand, command_name='show'):
     """Show info about an environment."""
+    name: Optional[str] = _get_name_field(required=False)
     list_packages: bool = field(default=False, metadata={'help': 'include list of installed packages'})
 
     def run(self) -> None:
-        Environment(self.name).show(list_packages=self.list_packages)
+        if self.name is None:
+            if (env := get_active_environment()) is None:
+                raise EnvError(f'Not currently in an environment managed by {PROG}')
+            name = env.name
+        else:
+            name = self.name
+        Environment(name).show(list_packages=self.list_packages)
 
 
 @dataclass
@@ -207,6 +218,7 @@ class EnvUninstall(EnvSubcommand, command_name='uninstall'):
     distros: list[str] = _distros_field
 
     def run(self) -> None:
+        assert self.name is not None
         Environment(self.name).uninstall(packages=self.packages, requirements=self.requirements, distros=self.distros)
 
 

@@ -307,3 +307,16 @@ class Environment:
                 print(env)
         else:
             eprint('No environments exist.')
+
+
+def get_active_environment() -> Optional[Environment]:
+    """Gets an Environment for the current active environment, provided that one is active and is a subdirectory of the configured environment directory.
+    Returns None otherwise."""
+    if (virtual_env := os.environ.get('VIRTUAL_ENV')) is None:
+        return None
+    base_dir = get_env_base_dir()
+    venv_path = Path(virtual_env)
+    venv_name = venv_path.name
+    if venv_path == (base_dir / venv_name):
+        return Environment(venv_name)
+    return None
