@@ -2,9 +2,6 @@
 
 # TODO
 
-- Command to name of currently active environment?
-- Shorthand for "this environment" in install commands
-    - Either `.` or just omit the environment to assume the current one
 - Support `extra_index_url` config variable
     - Note: `UV_*` env vars are supported automatically
 - `docs`

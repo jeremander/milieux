@@ -37,23 +37,38 @@ _distros_field: Any = field(
 @dataclass
 class _EnvSubcommand(CLIDataclass):
 
+    def _get_environment(self) -> Environment:
+        assert hasattr(self, 'name')
+        if self.name is None:
+            if (env := get_active_environment()) is None:
+                raise EnvError(f'Not currently in an environment managed by {PROG}')
+            name = env.name
+        else:
+            name = self.name
+        return Environment(name)
+
     def run(self) -> None:
         raise NotImplementedError
 
 
 @dataclass
 class EnvSubcommand(_EnvSubcommand):
-    """Base class for environment subcommands."""
-    name: Optional[str] = _get_name_field(required=True)
+    """Base class for environment subcommands where the environment name is not required."""
+    name: Optional[str] = _get_name_field(required=False)
 
 
 @dataclass
-class EnvActivate(EnvSubcommand, command_name='activate'):
+class EnvSubcommandNameRequired(_EnvSubcommand):
+    """Base class for environment subcommands where the environment name is required."""
+    name: str = _get_name_field(required=True)
+
+
+@dataclass
+class EnvActivate(EnvSubcommandNameRequired, command_name='activate'):
     """Activate an environment."""
 
     def run(self) -> None:
-        assert self.name is not None
-        Environment(self.name).activate()
+        self._get_environment().activate()
 
 
 @dataclass
@@ -61,8 +76,7 @@ class EnvFreeze(EnvSubcommand, command_name='freeze'):
     """List installed packages in an environment."""
 
     def run(self) -> None:
-        assert self.name is not None
-        Environment(self.name).freeze()
+        self._get_environment().freeze()
 
 
 @dataclass
@@ -78,8 +92,8 @@ class EnvInstall(EnvSubcommand, command_name='install'):
     )
 
     def run(self) -> None:
-        assert self.name is not None
-        Environment(self.name).install(packages=self.packages, requirements=self.requirements, distros=self.distros, upgrade=self.upgrade, editable=self.editable)
+        env = self._get_environment()
+        env.install(packages=self.packages, requirements=self.requirements, distros=self.distros, upgrade=self.upgrade, editable=self.editable)
 
 
 @dataclass
@@ -91,9 +105,8 @@ class EnvList(_EnvSubcommand, command_name='list'):
 
 
 @dataclass
-class EnvNew(_EnvSubcommand, command_name='new'):
+class EnvNew(EnvSubcommand, command_name='new'):
     """Create a new environment."""
-    name: Optional[str] = _get_name_field(required=False)
     seed: bool = field(
         default=False,
         metadata={'help': 'install "seed" packages (e.g. `pip`) into environment'}
@@ -116,28 +129,20 @@ class EnvNew(_EnvSubcommand, command_name='new'):
 
 
 @dataclass
-class EnvRemove(EnvSubcommand, command_name='remove'):
+class EnvRemove(EnvSubcommandNameRequired, command_name='remove'):
     """Remove an environment."""
 
     def run(self) -> None:
-        assert self.name is not None
         Environment(self.name).remove()
 
 
 @dataclass
 class EnvShow(EnvSubcommand, command_name='show'):
     """Show info about an environment."""
-    name: Optional[str] = _get_name_field(required=False)
     list_packages: bool = field(default=False, metadata={'help': 'include list of installed packages'})
 
     def run(self) -> None:
-        if self.name is None:
-            if (env := get_active_environment()) is None:
-                raise EnvError(f'Not currently in an environment managed by {PROG}')
-            name = env.name
-        else:
-            name = self.name
-        Environment(name).show(list_packages=self.list_packages)
+        self._get_environment().show(list_packages=self.list_packages)
 
 
 @dataclass
@@ -150,13 +155,12 @@ class EnvSync(_EnvSubcommand,
 
 NOTE: it is strongly advised to sync from a set of *locked* dependencies.
 Run `milieux distro lock` to create one."""
-    name: Optional[str] = _get_name_field(required=True)
+    name: Optional[str] = _get_name_field(required=False)
     requirements: list[str] = _requirements_field
     distros: list[str] = _distros_field
 
     def run(self) -> None:
-        assert self.name is not None
-        Environment(self.name).sync(requirements=self.requirements, distros=self.distros)
+        self._get_environment().sync(requirements=self.requirements, distros=self.distros)
 
 
 _env_template_descr_brief = 'render one or more jinja templates, filling in variables from an environment'
@@ -164,8 +168,9 @@ _env_template_descr = f'{_env_template_descr_brief.capitalize()}.\n\nThe followi
 _env_template_descr += '\n'.join(f'\t{key}: {val}' for (key, val) in TEMPLATE_ENV_VARS.items())
 _env_template_descr += '\n\nExtra variables may be provided via the --extra-vars argument.'
 
+
 @dataclass
-class EnvTemplate(EnvSubcommand,
+class EnvTemplate(EnvSubcommandNameRequired,
     command_name='template',
     formatter_class=RawDescriptionHelpFormatter,
     help_descr_brief=_env_template_descr_brief,
@@ -218,8 +223,7 @@ class EnvUninstall(EnvSubcommand, command_name='uninstall'):
     distros: list[str] = _distros_field
 
     def run(self) -> None:
-        assert self.name is not None
-        Environment(self.name).uninstall(packages=self.packages, requirements=self.requirements, distros=self.distros)
+        self._get_environment().uninstall(packages=self.packages, requirements=self.requirements, distros=self.distros)
 
 
 @dataclass

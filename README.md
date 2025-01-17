@@ -152,6 +152,12 @@ This will source the activation script associated with the `my_env` virtual envi
 milieux env install my_env -d scientific -p scikit-learn torch
 ```
 
+If you are already in an activated environment, you may omit the name of the environment, and it will assume the active one:
+
+```shell
+milieux env install -p pandas
+```
+
 #### Sync packages
 
 `milieux env sync` is similar to `install`, but instead of installing new packages, it will *sync* them to the environment, making sure these are the *only* packages in the environment. This is ideal for controlling exactly what version of each specific package you want (see: [locking dependencies](#locking-dependencies)).
