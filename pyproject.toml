@@ -17,7 +17,7 @@ classifiers = [
   "Programming Language :: Python"
 ]
 dependencies = [
-  "fancy_dataclass >= 0.8",
+  "fancy_dataclass >= 0.7.3",
   "hatch",
   "jinja2",
   "pdoc",
@@ -45,9 +45,9 @@ path = "milieux/__init__.py"
 
 [tool.hatch.envs.lint]
 dependencies = [
-  "mypy>=1.14",
+  "mypy>=1.16",
   "py-gadzooks>=0.2.9",
-  "ruff>=0.9",
+  "ruff>=0.12",
   "pytest-mypy",
   "vermin>=1.6",
 ]
