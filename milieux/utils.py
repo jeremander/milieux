@@ -77,6 +77,7 @@ def eprint(s: str, **kwargs: Any) -> None:
 PALETTE = {
     'distro': 'dark_orange3',
     'env': 'green4',
+    'pkg': 'magenta',
 }
 
 def distro_sty(distro: str) -> str:
@@ -88,3 +89,8 @@ def env_sty(env: str) -> str:
     """Styles an environment name."""
     color = PALETTE['env']
     return f'[bold {color}]{env}[/]'
+
+def pkg_sty(pkg: str) -> str:
+    """Styles a package name."""
+    color = PALETTE['pkg']
+    return f'[bold {color}]{pkg}[/]'

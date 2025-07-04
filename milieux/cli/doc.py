@@ -1,38 +1,16 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from pkgutil import ModuleInfo
 import time
-from types import ModuleType
-from typing import Any, Callable, Literal, Union
+from typing import Literal, Optional, Union
 
 from fancy_dataclass import ArgparseDataclass, CLIDataclass
-import pdoc.doc
-import pdoc.extract
-import pdoc.render
-import pdoc.web
 
 from milieux import logger
 from milieux.distro import get_packages
+from milieux.doc import DocSetup
 
 
 DocFormat = Literal['markdown', 'google', 'numpy', 'restructuredtext']
-
-
-def _patch_pdoc() -> None:
-    """Override the default `__all__` behavior of pdoc so that it presents all submodules of a package even when it declares an `__all__` member."""
-    _iter_modules2: Callable[[ModuleType], dict[str, ModuleInfo]] = pdoc.extract.iter_modules2
-    _doc_init = pdoc.doc.Doc.__init__
-    def iter_modules2(module: ModuleType) -> dict[str, ModuleInfo]:
-        if hasattr(module, '__all__'):
-            del module.__all__
-        module.__all__ = None  # type: ignore[attr-defined]
-        return _iter_modules2(module)
-    def doc_init(self: Any, *args: Any, **kwargs: Any) -> None:
-        _doc_init(self, *args, **kwargs)
-        if hasattr(self.obj, '__all__'):
-            del self.obj.__all__
-    pdoc.extract.iter_modules2 = iter_modules2
-    pdoc.doc.Doc.__init__ = doc_init
 
 
 @dataclass
@@ -56,23 +34,44 @@ class PkgArgs(ArgparseDataclass):
         """Gets a list of all packages."""
         return get_packages(self.packages, self.requirements, self.distros)
 
+    @property
+    def default_site_name(self) -> Optional[str]:
+        """Gets the default documentation site name if none is provided, based on the packages specified."""
+        if (len(self.distros) == 1) and (not self.packages) and (not self.requirements):
+            return self.distros[0].title()
+        if (len(self.requirements) == 1) and (not self.packages) and (not self.distros):
+            return Path(self.requirements[0]).stem.title()
+        if (len(self.packages) == 1) and (not self.requirements) and (not self.distros):
+            return self.packages[0].title()
+        return None
+
 
 @dataclass
-class RenderArgs(ArgparseDataclass):
-    """Customize rendering of docs."""
-    # TODO: enable a way to vary the arguments per package
-    docformat: DocFormat = field(
-        default='markdown',
-        metadata={'help': 'docstring format', 'default_help': True}
+class _DocBuild:
+    """Base class for building API documentation using mkdocs."""
+    pkg_args: PkgArgs = field(
+        default_factory=PkgArgs,
+        metadata={'group': 'package arguments'}
     )
+    site_name: Optional[str] = field(
+        default=None,
+        metadata={'help': 'name of top-level site'}
+    )
+    # TODO: custom mkdocs jinja template
 
-    def configure(self) -> None:
-        """Configures the global pdoc render settings."""
-        pdoc.render.configure(docformat=self.docformat)
+    def __post_init__(self) -> None:
+        self._site_name = self.site_name
+        if self.site_name is None:  # assign a reasonable default site name
+            self._site_name = self.pkg_args.default_site_name
+
+    @property
+    def doc_setup(self) -> DocSetup:
+        """Gets a DocSetup object for building a mkdocs site."""
+        return DocSetup(site_name=self._site_name, packages=self.pkg_args.all_packages)
 
 
-@dataclass
-class DocBuild(CLIDataclass, command_name='build'):
+@dataclass(kw_only=True)
+class DocBuild(CLIDataclass, _DocBuild, command_name='build'):
     """Build API documentation."""
     output_dir: Path = field(
         metadata={
@@ -80,27 +79,21 @@ class DocBuild(CLIDataclass, command_name='build'):
             'help': 'save output documentation to this directory'
         }
     )
-    pkg_args: PkgArgs = field(
-        default_factory=PkgArgs,
-        metadata={'group': 'package arguments'}
-    )
-    render_args: RenderArgs = field(
-        default_factory=RenderArgs,
-        metadata={'group': 'rendering arguments'}
-    )
+    # TODO: custom mkdocs config
 
     def run(self) -> None:
-        self.render_args.configure()
         start = time.perf_counter()
         logger.info(f'Building documentation to {self.output_dir}...')
-        _patch_pdoc()
-        pdoc.pdoc(*self.pkg_args.all_packages, output_directory=self.output_dir)
+        setup = self.doc_setup
+        print(setup)
+        print(setup.package_paths)
+        # TODO: build
         elapsed = time.perf_counter() - start
-        logger.info(f'Build docs in {elapsed:.3g} sec')
+        logger.info(f'Built docs in {elapsed:.3g} sec')
 
 
 @dataclass
-class DocServe(CLIDataclass, command_name='serve'):
+class DocServe(CLIDataclass, _DocBuild, command_name='serve'):
     """Serve API documentation."""
     host: str = field(
         default='localhost',
@@ -114,33 +107,24 @@ class DocServe(CLIDataclass, command_name='serve'):
         default=False,
         metadata={'help': 'do not open a browser after web server has started'}
     )
-    pkg_args: PkgArgs = field(
-        default_factory=PkgArgs,
-        metadata={'group': 'package arguments'}
-    )
-    render_args: RenderArgs = field(
-        default_factory=RenderArgs,
-        metadata={'group': 'rendering arguments'}
-    )
 
     def run(self) -> None:
-        self.render_args.configure()
         logger.info('Serving documentation...')
-        _patch_pdoc()
-        try:
-            httpd = pdoc.web.DocServer((self.host, self.port), self.pkg_args.all_packages)
-        except OSError as e:
-            raise OSError(f'Cannot start web server on {self.host}:{self.port}: {e}') from e
-        with httpd:
-            url = f'http://{self.host}:{httpd.server_port}'
-            logger.info(f'Server ready at {url}')
-            if not self.no_browser:
-                pdoc.web.open_browser(url)
-            try:
-                httpd.serve_forever()
-            except KeyboardInterrupt:
-                httpd.server_close()
-                return
+        # TODO: serve (with or without browser)
+        # try:
+        #     httpd = pdoc.web.DocServer((self.host, self.port), self.pkg_args.all_packages)
+        # except OSError as e:
+        #     raise OSError(f'Cannot start web server on {self.host}:{self.port}: {e}') from e
+        # with httpd:
+        #     url = f'http://{self.host}:{httpd.server_port}'
+        #     logger.info(f'Server ready at {url}')
+        #     if not self.no_browser:
+        #         pdoc.web.open_browser(url)
+        #     try:
+        #         httpd.serve_forever()
+        #     except KeyboardInterrupt:
+        #         httpd.server_close()
+        #         return
 
 
 @dataclass

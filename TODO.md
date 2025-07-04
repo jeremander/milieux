@@ -2,8 +2,9 @@
 
 # TODO
 
+- Allow implicit `.` environment in most `mlx env` subcommands.
 - Support `extra_index_url` config variable
-    - Note: `UV_*` env vars are supported automatically
+    - Note: `UV_*` env vars are supported automatically (put this in README)
 - `docs`
     - Enable package-specific customization, e.g. different docstring styles.
     - Enable PEP 727 Annotated/Doc annotations

@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Union
 
-from milieux.utils import distro_sty, env_sty
+from milieux.utils import distro_sty, env_sty, pkg_sty
 
 
 class MilieuxError(ValueError):
@@ -42,6 +42,12 @@ class NoSuchEnvironmentError(EnvError):
 
 class NoPackagesError(MilieuxError):
     """Error for when no packages are provided."""
+
+class PackageNotFoundError(MilieuxError):
+    """Error for when a package was not found."""
+    def __init__(self, pkg_name: str) -> None:
+        self.pkg_name = pkg_name
+        super().__init__(f'Package named {pkg_sty(pkg_name)} was not found')
 
 class NoSuchRequirementsFileError(MilieuxError):
     """Error for when a requirements file does not exist."""

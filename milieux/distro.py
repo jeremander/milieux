@@ -37,7 +37,7 @@ def get_packages(packages: Optional[Sequence[str]] = None, requirements: Optiona
         for req in reqs:
             try:
                 pkgs.update(stripped for line in read_lines(req) if (stripped := line.strip()))
-            except FileNotFoundError as e:
+            except (FileNotFoundError, IsADirectoryError) as e:
                 raise NoSuchRequirementsFileError(str(req)) from e
     return sorted(pkgs)
 
