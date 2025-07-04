@@ -7,7 +7,7 @@ name = "milieux"
 dynamic = ["version"]
 description = "Tool to assist in developing, building, and installing Python packages."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "MIT"
 keywords = ["virtualenv"]
 authors = [
@@ -55,7 +55,7 @@ dependencies = [
 [tool.hatch.envs.lint.scripts]
 # linting
 run-ruff = "ruff check {args:milieux tests}"
-# ensure compatibility with Py3.9 and higher
+# ensure compatibility with minimum Python version
 run-vermin = "vermin {args:.}"
 # type-checking
 run-mypy = "mypy --install-types --non-interactive {args:milieux tests}"
@@ -78,7 +78,7 @@ cov-report = ["- coverage combine", "coverage report", "coverage html"]
 cov = ["test", "cov-report"]
 
 [[tool.hatch.envs.test.matrix]]
-python = ["3.9", "3.10", "3.11", "3.12"]
+python = ["3.10", "3.11", "3.12", "3.13"]
 
 [tool.hatch.envs.badge]
 dependencies = [
