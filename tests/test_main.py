@@ -18,7 +18,7 @@ from milieux.distro import Distro
 from milieux.env import Environment
 from milieux.utils import read_lines
 
-from . import TEST_DATA_DIR, check_main
+from . import TEST_DATA_DIR, check_main, cli_args
 
 
 def test_main_missing_args():
@@ -105,7 +105,10 @@ class TestConfig:
         p.touch()
         check_main(['-c', str(p), 'config', 'path'], stdout=str(p))
         # empty config file uses default values
-        cfg = Config.from_toml_string(subprocess.check_output([PROG, '-c', str(p), 'config', 'show'], text=True))
+        args = ['-c', str(p), 'config', 'show']
+        with cli_args(*args), redirect_stdout(StringIO()) as sio:
+            MilieuxCLI.main()
+            cfg = Config.from_toml_string(sio.getvalue())
         assert cfg.env_dir == Config().env_dir
         # override config path with existent path with invalid extension
         p = Path(tmp_config.base_dir) / 'test'
