@@ -8,6 +8,7 @@ from typing import Annotated, Callable, Optional, Union
 from unittest.mock import patch
 
 from rich.console import Console
+from rich.highlighter import NullHighlighter
 from typing_extensions import Doc
 
 from milieux import console, handler, logger
@@ -60,7 +61,9 @@ def check_main(
             console.file = sio_err
             # rich logs output in a table with width determined by terminal, so we need to set width large enough to prevent line wrapping
             width = console.width
+            highlighter = handler.highlighter
             console.width = 2_000
+            handler.highlighter = NullHighlighter()
         try:
             MilieuxCLI.main()
         except SystemExit as e:
@@ -73,6 +76,7 @@ def check_main(
             if sio_err:
                 console.file = sys.stderr
                 console.width = width
+                handler.highlighter = highlighter
         flags = re.MULTILINE | re.DOTALL  # novermin
         if stdout is not None:
             assert sio_out is not None
