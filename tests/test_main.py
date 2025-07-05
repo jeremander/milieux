@@ -208,6 +208,28 @@ class TestDistro:
         check_main(['distro', 'lock', name], stderr='Distribution not found at', success=False)
 
 
+class TestDoc:
+
+    def test_build(self, monkeypatch, tmp_path):
+        """Tests the 'doc build' subcommand for building API reference documentation."""
+        monkeypatch.chdir(tmp_path)
+        output_dir = tmp_path / 'output'
+        # build documentation for the milieux package itself
+        check_main(['doc', 'build', '-p', 'milieux', '-o', str(output_dir)], stderr='Built docs in .* sec')
+        mkdocs_config_path = output_dir / 'mkdocs.yml'
+        assert mkdocs_config_path.is_file()
+        assert 'site_name: Milieux' in mkdocs_config_path.read_text()
+        docs_dir = output_dir / 'docs'
+        assert docs_dir.is_dir()
+        index_md_path = docs_dir / 'index.md'
+        assert index_md_path.is_file()
+        assert 'auto-generated API Reference' in index_md_path.read_text()
+        site_dir = output_dir / 'site'
+        assert site_dir.is_dir()
+        index_html_path = site_dir / 'index.html'
+        assert 'auto-generated API Reference' in index_html_path.read_text()
+
+
 class TestEnv:
 
     def test_env(self, monkeypatch, tmp_config):

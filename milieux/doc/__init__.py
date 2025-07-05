@@ -28,10 +28,17 @@ def resolve_local_package_path(path: Path) -> Path:
             data = tomli.load(f)
         # try PEP 621 first
         if (name := data.get('project', {}).get('name')):
+            name = name.replace('-', '_')
             # infer package dir from name
-            p: Path = root / name.replace('-', '_')
+            p: Path = root / name
             if p.is_dir():
                 return p
+            # next, try src subdirectory
+            src_dir = root / 'src'
+            if src_dir.is_dir():
+                p = src_dir / name
+                if p.is_dir():
+                    return p
     # fallback: look for any subdir with __init__.py
     for child in root.iterdir():
         if child.name.startswith('test'):
@@ -83,6 +90,7 @@ class DocSetup:
     packages: Annotated[list[str], Doc('List of packages to include in docs')]
     config_template: Annotated[Path, Doc('jinja template for mkdocs.yml')] = DEFAULT_DOC_CONFIG_TEMPLATE
     home_template: Annotated[Path, Doc('jinja template for index.md')] = DEFAULT_DOC_HOME_TEMPLATE
+    verbose: Annotated[bool, Doc('be verbose')] = False
 
     @property
     def package_paths(self) -> list[Path]:
@@ -120,9 +128,8 @@ class DocSetup:
         return config_path
 
     def _run_command(self, cmd: list[str]) -> None:
-        print(' '.join(cmd))
         try:
-            _ = run_command(cmd, check=True)
+            _ = run_command(cmd, check=True, capture_output=(not self.verbose))
         except CalledProcessError as e:
             msg = '' if (e.stderr is None) else e.stderr.rstrip()
             raise DocBuildError(msg) from e

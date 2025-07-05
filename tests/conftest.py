@@ -8,7 +8,7 @@ from milieux.config import Config, user_default_base_dir, user_default_config_pa
 
 @pytest.fixture()
 def tmp_config(monkeypatch):
-    """Fixture to set the user's home directory and  global config's `base_dir` to temporary directories."""
+    """Fixture to set the user's home directory and global config's `base_dir` to temporary directories."""
     with TemporaryDirectory() as tmpdir:
         home_dir = pathlib.Path(tmpdir) / 'home'
         home_dir.mkdir()

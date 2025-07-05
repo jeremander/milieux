@@ -65,6 +65,13 @@ class _DocBuild:
         default=None,
         metadata={'help': 'jinja template for index.md'}
     )
+    verbose: bool = field(
+        default=False,
+        metadata={
+            'args': ['-v', '--verbose'],
+            'help': 'be verbose',
+        }
+    )
 
     def __post_init__(self) -> None:
         self._site_name = self.site_name
@@ -81,7 +88,8 @@ class _DocBuild:
             site_name=self._site_name,
             packages=self.pkg_args.all_packages,
             config_template=self.config_template or DEFAULT_DOC_CONFIG_TEMPLATE,
-            home_template=self.home_template or DEFAULT_DOC_HOME_TEMPLATE
+            home_template=self.home_template or DEFAULT_DOC_HOME_TEMPLATE,
+            verbose=self.verbose,
         )
 
 

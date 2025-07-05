@@ -28,7 +28,8 @@ plugins:
           docstring_style: google
           docstring_section_style: list
           extensions:
-            - griffe_fieldz
+            #- griffe_fieldz
+            #- griffe_pydantic
             - griffe_typingdoc
           filters: ["!^_"]
           group_by_category: true
@@ -36,7 +37,6 @@ plugins:
           members_order: source
           merge_init_into_class: true
           parameter_headings: true
-          separate_signature: true
           # show_if_no_docstring: true
           show_root_heading: true
           show_signature: true

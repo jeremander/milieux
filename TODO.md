@@ -6,7 +6,6 @@
 - Support `extra_index_url` config variable
     - Note: `UV_*` env vars are supported automatically (put this in README)
 - `doc`
-    - Unit tests
     - README documentation
 
 ## Future
@@ -30,6 +29,7 @@
             - Otherwise, shows list and prompts to view each one
                 - Once viewed, prompts whether to use
     - `doc`
+        - Get `pydantic.dataclass` fields to work properly.
         - Improve default landing page via `index.md.jinja`?
         - Enable package-specific customization, e.g. different docstring styles.
     - `env`
