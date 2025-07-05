@@ -63,3 +63,6 @@ class NoSuchTemplateError(TemplateError):
     def __init__(self, template_file: Union[str, Path]) -> None:
         self.template_file = template_file
         super().__init__(f'Template file {template_file} does not exist')
+
+class DocBuildError(MilieuxError):
+    """Error when trying to build documentation."""

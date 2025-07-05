@@ -16,13 +16,13 @@ from milieux import PROG, logger
 from milieux.config import get_config, update_command_with_index_url
 from milieux.distro import get_requirements
 from milieux.errors import EnvError, EnvironmentExistsError, MilieuxError, NoPackagesError, NoSuchEnvironmentError, TemplateError
-from milieux.utils import AnyPath, ensure_path, env_sty, eprint, run_command
+from milieux.utils import AnyPath, ensure_dir, env_sty, eprint, run_command
 
 
 def get_env_base_dir() -> Path:
     """Checks if the configured environment directory exists, and if not, creates it."""
     cfg = get_config()
-    return ensure_path(cfg.env_dir_path)
+    return ensure_dir(cfg.env_dir_path)
 
 # defines the available environment variables for jinja templates
 TEMPLATE_ENV_VARS = {

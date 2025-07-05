@@ -5,20 +5,19 @@
 - Allow implicit `.` environment in most `mlx env` subcommands.
 - Support `extra_index_url` config variable
     - Note: `UV_*` env vars are supported automatically (put this in README)
-- `docs`
-    - Enable package-specific customization, e.g. different docstring styles.
-    - Enable PEP 727 Annotated/Doc annotations
-    - Nav sidebar has flat structure showing all modules -- can it be made hierarchical?
-    - Edit index.html.jinja2 for custom landing page
+- `doc`
+    - Unit tests
+    - README documentation
 
 ## Future
 
 - Subcommands
     - Build/publish
-        - May just be thin wrappers for `hatch`?
+        - May just be thin wrappers for `uv build`?
         - Or could build wheels for entire distro and upload them all
             - use `pip wheel -r <distro>` to do this
             - `uv` does not yet seem to replace `pip wheel`
+                - See: https://github.com/astral-sh/uv/issues/1681
         - `build`
             - Build `sdist` or `wheel`
             - See: https://pip.pypa.io/en/stable/cli/pip_wheel/
@@ -30,6 +29,9 @@
             - Can give a path and it will copy it to user location
             - Otherwise, shows list and prompts to view each one
                 - Once viewed, prompts whether to use
+    - `doc`
+        - Improve default landing page via `index.md.jinja`?
+        - Enable package-specific customization, e.g. different docstring styles.
     - `env`
         - `create`
             - "Stock" environments (testing, linting, etc.) with names

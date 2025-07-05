@@ -40,12 +40,14 @@ def resolve_path(path: str, base_dir: Path) -> Path:
     # otherwise, a relative path
     return base_dir / path
 
-def ensure_path(path: Path) -> Path:
-    """If the given path does not exist, creates it.
+def ensure_dir(path: Path) -> Path:
+    """If the given directory does not exist, creates it.
     Then returns the Path."""
     if not path.exists():
         logger.info(f'mkdir -p {path}')
         path.mkdir(parents=True)
+    if not path.is_dir():
+        raise NotADirectoryError(path)
     return path
 
 def read_lines(path: AnyPath) -> list[str]:

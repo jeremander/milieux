@@ -17,13 +17,19 @@ classifiers = [
   "Programming Language :: Python"
 ]
 dependencies = [
-  "fancy_dataclass >= 0.7.3",
-  "hatch",
-  "jinja2",
-  "pdoc",
-  "rich",
-  "typing_extensions >= 4.10",
-  "uv >= 0.5.16",
+  "fancy_dataclass >= 0.7.3",  # extra dataclass features
+  "griffe-fieldz",  # docs for dataclass-like objects
+  "griffe-typingdoc",  # docs for Annotated/Doc syntax
+  "hatch",  # environment management
+  "jinja2",  # templating
+  "mkdocs >= 1.6",  # documentation generation
+  "mkdocs-api-autonav",  # auto-generation of mkdocs templates
+  "mkdocs-material",  # Material theme for mkdocs
+  "mkdocstrings[python]",  # auto-generation of mkdocs API docs from Python code
+  "rich",  # pretty terminal colors/tables
+  "tomli",  # TOML parsing
+  "typing_extensions >= 4.10",  # extra types
+  "uv >= 0.5.16",  # dependency management
 ]
 
 [tool.hatch.metadata]
@@ -36,6 +42,11 @@ milieux = "milieux.cli.main:MilieuxCLI.main"
 Documentation = "https://github.com/jeremander/milieux#readme"
 Issues = "https://github.com/jeremander/milieux/issues"
 Source = "https://github.com/jeremander/milieux"
+
+[tool.hatch.build]
+include = [
+  "milieux/doc/*.jinja"
+]
 
 [tool.hatch.build.targets.sdist]
 exclude = [".venv", "TODO.md"]

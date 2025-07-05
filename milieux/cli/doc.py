@@ -7,7 +7,7 @@ from fancy_dataclass import ArgparseDataclass, CLIDataclass
 
 from milieux import logger
 from milieux.distro import get_packages
-from milieux.doc import DocSetup
+from milieux.doc import DEFAULT_DOC_CONFIG_TEMPLATE, DEFAULT_DOC_HOME_TEMPLATE, DEFAULT_SITE_NAME, DocSetup
 
 
 DocFormat = Literal['markdown', 'google', 'numpy', 'restructuredtext']
@@ -57,17 +57,32 @@ class _DocBuild:
         default=None,
         metadata={'help': 'name of top-level site'}
     )
-    # TODO: custom mkdocs jinja template
+    config_template: Optional[Path] = field(
+        default=None,
+        metadata={'help': 'jinja template for mkdocs.yml'}
+    )
+    home_template: Optional[Path] = field(
+        default=None,
+        metadata={'help': 'jinja template for index.md'}
+    )
 
     def __post_init__(self) -> None:
         self._site_name = self.site_name
-        if self.site_name is None:  # assign a reasonable default site name
+        if self._site_name is None:  # assign a reasonable default site name
             self._site_name = self.pkg_args.default_site_name
+        if self._site_name is None:
+            self._site_name = DEFAULT_SITE_NAME
 
     @property
     def doc_setup(self) -> DocSetup:
         """Gets a DocSetup object for building a mkdocs site."""
-        return DocSetup(site_name=self._site_name, packages=self.pkg_args.all_packages)
+        assert self._site_name is not None
+        return DocSetup(
+            site_name=self._site_name,
+            packages=self.pkg_args.all_packages,
+            config_template=self.config_template or DEFAULT_DOC_CONFIG_TEMPLATE,
+            home_template=self.home_template or DEFAULT_DOC_HOME_TEMPLATE
+        )
 
 
 @dataclass(kw_only=True)
@@ -79,15 +94,11 @@ class DocBuild(CLIDataclass, _DocBuild, command_name='build'):
             'help': 'save output documentation to this directory'
         }
     )
-    # TODO: custom mkdocs config
 
     def run(self) -> None:
         start = time.perf_counter()
         logger.info(f'Building documentation to {self.output_dir}...')
-        setup = self.doc_setup
-        print(setup)
-        print(setup.package_paths)
-        # TODO: build
+        self.doc_setup.build_docs(self.output_dir)
         elapsed = time.perf_counter() - start
         logger.info(f'Built docs in {elapsed:.3g} sec')
 
@@ -110,21 +121,7 @@ class DocServe(CLIDataclass, _DocBuild, command_name='serve'):
 
     def run(self) -> None:
         logger.info('Serving documentation...')
-        # TODO: serve (with or without browser)
-        # try:
-        #     httpd = pdoc.web.DocServer((self.host, self.port), self.pkg_args.all_packages)
-        # except OSError as e:
-        #     raise OSError(f'Cannot start web server on {self.host}:{self.port}: {e}') from e
-        # with httpd:
-        #     url = f'http://{self.host}:{httpd.server_port}'
-        #     logger.info(f'Server ready at {url}')
-        #     if not self.no_browser:
-        #         pdoc.web.open_browser(url)
-        #     try:
-        #         httpd.serve_forever()
-        #     except KeyboardInterrupt:
-        #         httpd.server_close()
-        #         return
+        self.doc_setup.serve_docs(host=self.host, port=self.port, no_browser=self.no_browser)
 
 
 @dataclass

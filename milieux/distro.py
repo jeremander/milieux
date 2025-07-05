@@ -9,13 +9,13 @@ from typing_extensions import Doc, Self
 from milieux import logger
 from milieux.config import get_config, update_command_with_index_url
 from milieux.errors import DistroExistsError, InvalidDistroError, NoPackagesError, NoSuchDistroError, NoSuchRequirementsFileError
-from milieux.utils import AnyPath, distro_sty, ensure_path, eprint, read_lines, run_command
+from milieux.utils import AnyPath, distro_sty, ensure_dir, eprint, read_lines, run_command
 
 
 def get_distro_base_dir() -> Path:
     """Checks if the configured distro directory exists, and if not, creates it."""
     cfg = get_config()
-    return ensure_path(cfg.distro_dir_path)
+    return ensure_dir(cfg.distro_dir_path)
 
 def get_requirements(requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[Sequence[str]] = None) -> list[str]:
     """Helper function to get requirements files, given a list of requirements files and/or distro names."""

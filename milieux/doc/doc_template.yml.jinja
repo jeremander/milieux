@@ -1,0 +1,56 @@
+site_name: {{SITE_NAME}}
+
+theme:
+  name: material
+  features:
+    - navigation.footer
+    - navigation.path
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+plugins:
+- search
+- mkdocstrings:
+    default_handler: python
+    handlers:
+      python:
+        options:
+          docstring_options:
+            ignore_init_summary: true
+            show_dataclass_fields: true
+          docstring_style: google
+          docstring_section_style: list
+          extensions:
+            - griffe_fieldz
+            - griffe_typingdoc
+          filters: ["!^_"]
+          group_by_category: true
+          heading_level: 1
+          members_order: source
+          merge_init_into_class: true
+          parameter_headings: true
+          separate_signature: true
+          # show_if_no_docstring: true
+          show_root_heading: true
+          show_signature: true
+          show_signature_annotations: true
+          show_source: true
+          show_symbol_type_heading: true
+          show_symbol_type_toc: true
+          signature_crossrefs: true
+          summary: true
+          unwrap_annotated: true
+- api-autonav:
+    modules: {{PKG_PATHS}}
+    # don't prepend modules with '[mod]' in navbar
+    nav_item_prefix: ""
+
+nav:
+  - API Reference: reference
