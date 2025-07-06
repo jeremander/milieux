@@ -42,7 +42,7 @@ pip install milieux
 
 - 🤵🏻‍♂️ [fancy_dataclass](https://fancy-dataclass.readthedocs.io/en/latest/), for configurations and argument parsing.
 
-- 📄 [pdoc](https://pdoc.dev/docs/pdoc.html), for documentation generation.
+- 📄 [mkdocs](https://www.mkdocs.org), for documentation generation.
 
 - 💰 [rich](https://rich.readthedocs.io/en/stable/index.html), for text and table styling.
 
@@ -127,7 +127,7 @@ tzdata==2024.1
 | `remove`    | Remove an environment |
 | `show`      | Show environment info |
 | `sync`      | Sync dependencies |
-| `template`  | Render a [jinja](https://jinja.palletsprojects.com/en/3.1.x/) template, filling in variables from an environment |
+| `template`  | Render a [jinja](https://jinja.palletsprojects.com/) template, filling in variables from an environment |
 | `uninstall` | Uninstall packages |
 
 #### Activate an environment
@@ -180,7 +180,7 @@ The command above will create a new project in a `my_project` subdirectory.
 
 The `--utility` argument lets you specify the utility for creating the project scaffold.
 
-🚧 At present, the only supported scaffold utility is [hatch](https://hatch.pypa.io/latest). In the future we plan to support arbitrary project templates via [jinja](https://jinja.palletsprojects.com/en/3.1.x/) and/or [cookiecutter](https://cookiecutter.readthedocs.io/en/stable/).
+🚧 At present, the only supported scaffold utility is [hatch](https://hatch.pypa.io/latest). In the future we plan to support arbitrary project templates via [jinja](https://jinja.palletsprojects.com/) and/or [cookiecutter](https://cookiecutter.readthedocs.io/en/stable/).
 
 ### `doc`: Create API reference documentation
 
@@ -189,7 +189,7 @@ The `--utility` argument lets you specify the utility for creating the project s
 **Example**: build docs for all packages in a distro, saving them to a `docs/` directory:
 
 ```shell
-milieux doc build -d my_distro -o docs`
+milieux doc build -d my_distro -o docs
 ```
 
 **Example**: serve documentation on `localhost` for a single package:
@@ -198,7 +198,20 @@ milieux doc build -d my_distro -o docs`
 milieux doc serve -p my_package
 ```
 
-This uses the [pdoc](https://pdoc.dev/docs/pdoc.html) library to generate documentation. At present, `milieux` does not expose much in the way of customization, but perhaps it will in the future.
+This uses [mkdocs](https://www.mkdocs.org), [mkdocs-material](https://squidfunk.github.io/mkdocs-material/), and [mkdocs-api-autonav](https://github.com/tlambert03/mkdocs-api-autonav/) to produce the documentation.
+
+#### Customization
+
+`milieux` does not (yet) expose much in the way of customization, but some things may be controlled using [jinja](https://jinja.palletsprojects.com/) templates.
+
+To customize the `mkdocs` settings, you can provide a jinja YAML template file to `--config-template`. The default is [doc_template.yml.jinja](milieux/doc/doc_template.yml.jinja).
+
+To customize the home page (`index.html`), you can provide a jinja Markdown template file to `--home-template`. The default is [home_template.md.jinja](milieux/doc/home_template.md.jinja).
+
+Two template variables may be used within the templates. Their values will be passed in based on other command-line arguments:
+
+- `SITE_NAME`: based on `--site-name` (if provided), or the distro/package name (if there is only one), or the default name "API Docs" otherwise.
+- `PKG_PATHS`: list of paths to each of the packages to be included in the reference docs. This is derived from the list of distros, requirements, and packages provided by the user.
 
 ### `config`: Manage configurations
 
