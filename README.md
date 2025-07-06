@@ -229,6 +229,30 @@ To override the default config path, you can provide `--config` to point to a sp
 | `path`     | Print out path to the configs |
 | `show`     | Show the configs |
 
+#### PyPI Configurations
+
+`milieux` uses `uv` as its package manager, which in turn defaults to the standard [Python Packaging Index](https://pypi.org/) (PyPI) to download packages. However, you may want to override this in order to use a custom PyPI mirror.
+
+This can be done in one of two ways:
+
+1. Set the `UV_DEFAULT_INDEX` or `UV_INDEX` environment variables.
+2. Configure the `default_index` or `indexes` fields in the `[pip]` section of your config file.
+
+Example `pip` section of file:
+
+```toml
+[pip]
+# URL for default PyPI index
+default_index_url = "https://pypi.org/simple"
+# URLs for extra indexes, in descending priority order (but all taking priority over the default)
+index_urls = [
+    "https://internal-pypi-mirror.example.com",
+    "https://backup-pypi-mirror.example.com"
+]
+```
+
+See the `uv` page on [Package Indexes](https://docs.astral.sh/uv/concepts/indexes/) for more information on how package index overrides work.
+
 ## Support and feedback
 
 🛠️ Feel free to submit pull requests, ask questions, or make bugfix/feature requests on [Github Issues](https://github.com/jeremander/milieux/issues).
