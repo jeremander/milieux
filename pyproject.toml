@@ -44,9 +44,7 @@ Issues = "https://github.com/jeremander/milieux/issues"
 Source = "https://github.com/jeremander/milieux"
 
 [tool.hatch.build]
-include = [
-  "milieux/doc/*.jinja"
-]
+packages = ["milieux"]
 
 [tool.hatch.build.targets.sdist]
 exclude = [".venv", "TODO.md"]
