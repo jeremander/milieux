@@ -54,12 +54,14 @@ def resolve_package_path(pkg_str: str) -> Path:
     if len(toks) != 1:
         raise PackageNotFoundError(pkg_str)
     pkg_str = toks[0]
-    if (path := Path(pkg_str)).exists():
-        # resolve local package directory
-        try:
-            return resolve_local_package_path(path)
-        except FileNotFoundError as e:
-            raise PackageNotFoundError(pkg_str) from e
+    if '/' in pkg_str:  # pkg_str is a path
+        if (path := Path(pkg_str)).exists():
+            # resolve local package directory
+            try:
+                return resolve_local_package_path(path)
+            except FileNotFoundError as e:
+                raise PackageNotFoundError(pkg_str) from e
+        raise PackageNotFoundError(pkg_str)
     # TODO: check for the package within an environment?
     try:
         mod = importlib.import_module(pkg_str)

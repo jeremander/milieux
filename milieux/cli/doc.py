@@ -1,16 +1,13 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 import time
-from typing import Literal, Optional, Union
+from typing import Optional, Union
 
 from fancy_dataclass import ArgparseDataclass, CLIDataclass
 
 from milieux import logger
 from milieux.distro import get_packages
 from milieux.doc import DEFAULT_DOC_CONFIG_TEMPLATE, DEFAULT_DOC_HOME_TEMPLATE, DEFAULT_SITE_NAME, DocSetup
-
-
-DocFormat = Literal['markdown', 'google', 'numpy', 'restructuredtext']
 
 
 @dataclass
@@ -42,7 +39,10 @@ class PkgArgs(ArgparseDataclass):
         if (len(self.requirements) == 1) and (not self.packages) and (not self.distros):
             return Path(self.requirements[0]).stem.title()
         if (len(self.packages) == 1) and (not self.requirements) and (not self.distros):
-            return self.packages[0].title()
+            name = self.packages[0]
+            if '/' in name:
+                return Path(name).stem.title()
+            return name.title()
         return None
 
 

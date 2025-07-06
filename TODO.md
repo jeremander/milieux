@@ -3,6 +3,7 @@
 # TODO
 
 - Allow implicit `.` environment in most `mlx env` subcommands.
+    - `mlx env show .` uses `.` as "name", seems wrong.
 - Support `extra_index_url` config variable
     - Note: `UV_*` env vars are supported automatically (put this in README)
 - `doc`
