@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
 from typing import get_args, get_type_hints
 
 import pytest
@@ -15,6 +16,7 @@ from milieux import PROG, __version__
 from milieux.cli.main import MilieuxCLI
 from milieux.config import Config, user_default_base_dir, user_default_config_path
 from milieux.distro import Distro
+from milieux.doc import DocSetup, resolve_package_path
 from milieux.env import Environment
 from milieux.utils import read_lines
 
@@ -210,15 +212,22 @@ class TestDistro:
 
 class TestDoc:
 
-    def test_build(self, monkeypatch, tmp_path):
-        """Tests the 'doc build' subcommand for building API reference documentation."""
-        monkeypatch.chdir(tmp_path)
+    def test_build_and_serve(self, monkeypatch, tmp_path):
+        """Tests the 'doc build' and 'doc serve' subcommands for generating API reference documentation."""
         output_dir = tmp_path / 'output'
-        # build documentation for the milieux package itself
-        check_main(['doc', 'build', '-p', 'milieux', '-o', str(output_dir)], stderr='Built docs in .* sec')
+        monkeypatch.chdir(tmp_path)
+        pkg_dir = tmp_path / 'myproj'
+        pkg_dir.mkdir()
+        (pkg_dir / '__init__.py').touch()
+        # include . in PYTHONPATH so the local package gets picked up
+        monkeypatch.setenv('PYTHONPATH', '.' + os.pathsep + os.environ.get('PYTHONPATH', ''))
+        monkeypatch.setattr(sys, 'path', ['.'] + sys.path)
+        assert resolve_package_path('myproj') == pkg_dir
+        # test build
+        check_main(['doc', 'build', '-p', 'myproj', '-o', str(output_dir)], stderr='Built docs in .* sec')
         mkdocs_config_path = output_dir / 'mkdocs.yml'
         assert mkdocs_config_path.is_file()
-        assert 'site_name: Milieux' in mkdocs_config_path.read_text()
+        assert 'site_name: Myproj' in mkdocs_config_path.read_text()
         docs_dir = output_dir / 'docs'
         assert docs_dir.is_dir()
         index_md_path = docs_dir / 'index.md'
@@ -228,6 +237,13 @@ class TestDoc:
         assert site_dir.is_dir()
         index_html_path = site_dir / 'index.html'
         assert 'auto-generated API Reference' in index_html_path.read_text()
+        # test serve
+        def _print_cmd(self, cmd):
+            # don't actually run a server; instead print the command output
+            print(' '.join(cmd))
+        monkeypatch.setattr(DocSetup, '_run_command', _print_cmd)
+        output_regex = r'mkdocs serve -f .+ --dev-addr localhost:8080'
+        check_main(['doc', 'serve', '-p', 'myproj'], stdout=output_regex)
 
 
 class TestEnv:
