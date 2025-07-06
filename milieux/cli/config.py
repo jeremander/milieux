@@ -42,8 +42,8 @@ class ConfigNew(CLIDataclass, command_name='new'):
         assert isinstance(default_env_dir, str)
         kwargs['env_dir'] = Prompt.ask('Directory for env_dir', default=default_env_dir).strip()
         # TODO: access ~/.pip/pip.conf to retrieve index_url if it exists
-        index_url = Prompt.ask('PyPI index URL \\[optional]').strip() or None
-        kwargs['pip'] = PipConfig(index_url=index_url)
+        index_url = Prompt.ask('Default PyPI index URL \\[optional]').strip() or None
+        kwargs['pip'] = PipConfig(default_index_url=index_url)
         cfg = Config(**kwargs)
         if self.stdout:
             print('\n' + cfg.to_toml_string())

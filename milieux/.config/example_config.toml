@@ -6,4 +6,5 @@
 
 # [pip]
 # URL for PyPI index
-# index_url = "https://my-pypi-mirror.org"
+# default_index_url = "https://pypi.org/simple"
+# index_urls = ["https://internal-pypi-mirror.example.com"]

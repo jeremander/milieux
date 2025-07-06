@@ -46,10 +46,24 @@ def set_config_path(cfg_path: Path) -> None:
 @dataclass
 class PipConfig(TOMLDataclass):
     """Configurations for pip."""
-    index_url: Annotated[
+    default_index_url: Annotated[
         Optional[str],
-        Doc('URL for PyPI index')
+        Doc('URL for default PyPI index')
     ] = None
+    index_urls: Annotated[
+        Optional[list[str]],
+        Doc('additional package index URLs (will be checked in order, with priority over the default index)'),
+    ] = None
+
+    @property
+    def uv_args(self) -> list[str]:
+        """Gets additional arguments for a `uv` command to set the index URLs appropriately."""
+        args = []
+        if self.default_index_url:
+            args.extend(['--default-index', self.default_index_url])
+        for url in (self.index_urls or []):
+            args.extend(['--index', url])
+        return args
 
 
 @dataclass
@@ -98,9 +112,3 @@ def get_config() -> Config:
         set_config_path(config_path)
         cfg.update_config()
     return cfg
-
-def update_command_with_index_url(cmd: list[str]) -> None:
-    """Given a `uv` command (list of arguments), if the globally configured `index_url` is set, adds a corresponding `--index-url` argument, in-place."""
-    cfg = get_config()
-    if (index_url := cfg.pip.index_url):
-        cmd.extend(['--index-url', index_url])

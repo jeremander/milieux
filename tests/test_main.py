@@ -370,12 +370,12 @@ class TestEnv:
         check_main(['env', 'sync', 'myenv', '-d', 'fake_dist'], stderr="No distro named fake_dist", success=False)
         # sync with custom index URL
         cfg = Config()
-        cfg.pip.index_url = 'fake-url'
+        cfg.pip.default_index_url = 'fake-url'
         fake_config = tmpdir / 'config.toml'
         cfg.save(fake_config)
         with cfg.as_config():
             # invalid --index-url seems to be ignored by uv
-            check_main(['-c', str(fake_config), 'env', 'sync', 'myenv', '-d', 'mydist'], stderr='--index-url fake-url', success=True)
+            check_main(['-c', str(fake_config), 'env', 'sync', 'myenv', '-d', 'mydist'], stderr='--default-index fake-url', success=True)
 
     def test_template(self, monkeypatch, tmp_config):
         name = 'myenv'

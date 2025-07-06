@@ -13,7 +13,7 @@ import jinja2
 from typing_extensions import Doc, Self
 
 from milieux import PROG, logger
-from milieux.config import get_config, update_command_with_index_url
+from milieux.config import get_config
 from milieux.distro import get_requirements
 from milieux.errors import EnvError, EnvironmentExistsError, MilieuxError, NoPackagesError, NoSuchEnvironmentError, TemplateError
 from milieux.utils import AnyPath, ensure_dir, env_sty, eprint, run_command
@@ -152,7 +152,7 @@ class Environment:
             raise NoPackagesError(f'Must specify packages to {operation}')
         cmd = ['uv', 'pip', operation]
         if install:
-            update_command_with_index_url(cmd)
+            cmd.extend(get_config().pip.uv_args)
         # TODO: extra index URLs?
         if packages:
             cmd.extend(packages)
@@ -196,8 +196,7 @@ class Environment:
                 raise EnvironmentExistsError(msg)
         logger.info(f'Creating environment {env_sty(name)} in {new_env_dir}')
         new_env_dir.mkdir()
-        cmd = ['uv', 'venv', str(new_env_dir)]
-        update_command_with_index_url(cmd)
+        cmd = ['uv', 'venv', str(new_env_dir)] + get_config().pip.uv_args
         if seed:
             cmd.append('--seed')
         if python:
@@ -278,8 +277,7 @@ class Environment:
         if not reqs:
             raise NoPackagesError('Must specify dependencies to sync')
         logger.info(f'Syncing dependencies in {env_sty(self.name)} environment')
-        cmd = ['uv', 'pip', 'sync'] + reqs
-        update_command_with_index_url(cmd)
+        cmd = ['uv', 'pip', 'sync'] + reqs + get_config().pip.uv_args
         self.run_command(cmd)
 
     def uninstall(

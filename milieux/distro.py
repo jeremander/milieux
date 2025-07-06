@@ -7,7 +7,7 @@ from typing import Annotated, Optional
 from typing_extensions import Doc, Self
 
 from milieux import logger
-from milieux.config import get_config, update_command_with_index_url
+from milieux.config import get_config
 from milieux.errors import DistroExistsError, InvalidDistroError, NoPackagesError, NoSuchDistroError, NoSuchRequirementsFileError
 from milieux.utils import AnyPath, distro_sty, ensure_dir, eprint, read_lines, run_command
 
@@ -79,7 +79,7 @@ class Distro:
         Returns the output as a string."""
         logger.info(f'Locking dependencies for {distro_sty(self.name)} distro')
         cmd = ['uv', 'pip', 'compile', str(self.path)]
-        update_command_with_index_url(cmd)
+        cmd.extend(get_config().pip.uv_args)
         if not annotate:
             cmd.append('--no-annotate')
         try:
