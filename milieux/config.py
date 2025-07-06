@@ -16,7 +16,7 @@ from milieux.utils import resolve_path
 
 def user_dir() -> Path:
     """Gets the path to the user's directory where configs, etc. will be stored."""
-    return Path.home() / f'.{PKG_NAME}'
+    return Path.home() / '.config' / PKG_NAME
 
 def user_default_config_path() -> Path:
     """Gets the default path to the user's config file."""

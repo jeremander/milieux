@@ -5,6 +5,7 @@
 # env_dir = "envs"
 
 # [pip]
-# URL for PyPI index
+# URL for default PyPI index
 # default_index_url = "https://pypi.org/simple"
+# URLs for extra indexes, in descending priority order (but all taking priority over the default)
 # index_urls = ["https://internal-pypi-mirror.example.com"]

@@ -4,8 +4,6 @@
 
 - Allow implicit `.` environment in most `mlx env` subcommands.
     - `mlx env show .` uses `.` as "name", seems wrong.
-- Support `extra_index_url` config variable
-    - Note: `UV_*` env vars are supported automatically (put this in README)
 
 ## Future
 
@@ -22,7 +20,7 @@
         - `publish`
             - Publish to PyPI (actual or local)
     - `config`
-        - Switch to `$XDG_HOME`?
+        - Switch to `pydantic` `BaseSettings` to get validation?
         - Config registry: various pre-made configs stored within `milieux`?
         - `use`: use a pre-installed config
             - Can give a path and it will copy it to user location
