@@ -39,7 +39,7 @@ class _EnvSubcommand(CLIDataclass):
 
     def _get_environment(self) -> Environment:
         assert hasattr(self, 'name')
-        if self.name is None:
+        if self.name in ['.', None]:
             if (env := get_active_environment()) is None:
                 raise EnvError(f'Not currently in an environment managed by {PROG}')
             name = env.name

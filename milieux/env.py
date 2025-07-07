@@ -46,6 +46,8 @@ class Environment:
     dir_path: Annotated[Path, Doc('Path to environment directory')]
 
     def __init__(self, name: str, dir_path: Optional[Path] = None) -> None:
+        if name.startswith('.'):
+            raise NoSuchEnvironmentError(name)
         self.name = name
         self.dir_path = dir_path or get_env_base_dir()
 
