@@ -18,7 +18,7 @@ classifiers = [
 ]
 dependencies = [
   "fancy_dataclass >= 0.7.3",  # extra dataclass features
-  "griffe-fieldz",  # docs for dataclass-like objects
+  # "griffe-fieldz",  # docs for dataclass-like objects
   "griffe-typingdoc",  # docs for Annotated/Doc syntax
   "hatch",  # environment management
   "jinja2",  # templating

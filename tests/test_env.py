@@ -1,7 +1,23 @@
 import os
+from pathlib import Path
 import sys
 
+import pytest
+
 from milieux.env import Environment, get_active_environment, get_env_base_dir
+from milieux.errors import NoSuchEnvironmentError
+
+
+def test_environment(tmp_config):
+    base_dir = get_env_base_dir()
+    name = 'my_env'
+    env = Environment(name)
+    assert env.name == name
+    assert env.dir_path == base_dir
+    dir_path = Path('/base/dir')
+    env = Environment(name, dir_path=dir_path)
+    with pytest.raises(NoSuchEnvironmentError, match=r'No environment named .*\..*'):
+        _ = Environment('.')
 
 
 def test_get_active_environment(monkeypatch, tmp_config):
