@@ -2,11 +2,6 @@
 
 # TODO
 
-- Allow implicit `.` environment in most `mlx env` subcommands.
-    - `mlx env show .` uses `.` as "name", seems wrong.
-
-## Future
-
 - Subcommands
     - Build/publish
         - May just be thin wrappers for `uv build`?

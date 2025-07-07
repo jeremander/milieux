@@ -11,7 +11,7 @@ from rich.console import Console
 from rich.highlighter import NullHighlighter
 from typing_extensions import Doc
 
-from milieux import console, handler, logger
+from milieux import logger
 from milieux.cli.main import MilieuxCLI
 
 
@@ -38,6 +38,13 @@ def patch_stdin(content):
         yield
 
 
+def set_logger_stream(stream):
+    """Sets the root logger stream to the given stream."""
+    for handler in logger.parent.handlers:  # type: ignore[union-attr]
+        if isinstance(handler, logging.StreamHandler):
+            handler.stream = stream
+
+
 def check_main(
     args: Annotated[list[str], Doc('list of arguments to main program')],
     stdin: Annotated[Optional[Args], Doc('user inputs for interactive prompts')] = None,
@@ -58,12 +65,7 @@ def check_main(
     with cli_args(*args), stdin_context, stdout_ctx as sio_out, stderr_ctx as sio_err:
         # capture logger output
         if sio_err:
-            console.file = sio_err
-            # rich logs output in a table with width determined by terminal, so we need to set width large enough to prevent line wrapping
-            width = console.width
-            highlighter = handler.highlighter
-            console.width = 2_000
-            handler.highlighter = NullHighlighter()
+            set_logger_stream(sio_err)
         try:
             MilieuxCLI.main()
         except SystemExit as e:
@@ -74,9 +76,7 @@ def check_main(
             assert success
         finally:
             if sio_err:
-                console.file = sys.stderr
-                console.width = width
-                handler.highlighter = highlighter
+                set_logger_stream(sys.stderr)
         flags = re.MULTILINE | re.DOTALL  # novermin
         if stdout is not None:
             assert sio_out is not None

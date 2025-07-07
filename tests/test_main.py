@@ -271,9 +271,11 @@ class TestEnv:
         d = {'name': 'myenv', 'path': str(env_dir), 'created_at': datetime.fromtimestamp(env_dir.stat().st_ctime).isoformat()}
         check_main(['env', 'show', 'myenv'], stdout=json.dumps(d, indent=2))
         check_main(['env', 'show'], stderr='Not currently in an environment', success=False)
+        check_main(['env', 'show', '.'], stderr='Not currently in an environment', success=False)
         # simulate being in an environment via VIRTUAL_ENV variable
         monkeypatch.setitem(os.environ, 'VIRTUAL_ENV', str(tmp_config.env_dir_path / 'myenv'))
         check_main(['env', 'show'], stdout=json.dumps(d, indent=2))
+        check_main(['env', 'show', '.'], stdout=json.dumps(d, indent=2))
         monkeypatch.setitem(os.environ, 'VIRTUAL_ENV', 'venv')
         check_main(['env', 'show'], stderr='Not currently in an environment', success=False)
         # show nonexistent environment
