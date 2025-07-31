@@ -35,14 +35,14 @@ class PkgArgs(ArgparseDataclass):
     def default_site_name(self) -> Optional[str]:
         """Gets the default documentation site name if none is provided, based on the packages specified."""
         if (len(self.distros) == 1) and (not self.packages) and (not self.requirements):
-            return self.distros[0].title()
+            return self.distros[0]
         if (len(self.requirements) == 1) and (not self.packages) and (not self.distros):
-            return Path(self.requirements[0]).stem.title()
+            return Path(self.requirements[0]).stem
         if (len(self.packages) == 1) and (not self.requirements) and (not self.distros):
             name = self.packages[0]
             if '/' in name:
-                return Path(name).stem.title()
-            return name.title()
+                return Path(name).stem
+            return name
         return None
 
 
