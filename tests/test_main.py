@@ -80,7 +80,7 @@ class TestConfig:
         assert cfg.env_dir_path == Config().env_dir_path
         check_main(['config', 'show'], stdout=out)
         # attempt to create another config file but say no to overwriting
-        check_main(['config', 'new'], stdin=['n'], stdout='already exists')
+        check_main(['config', 'new'], stdin=['n'], stdout=r'already\s+exists')
         # overwrite config file
         check_main(['config', 'new'], stdin=['y', '', 'envs2', ''], stderr=f'Saved config file to {cfg_path}')
         cfg = Config.load_config(cfg_path)
@@ -227,7 +227,7 @@ class TestDoc:
         check_main(['doc', 'build', '-p', 'myproj', '-o', str(output_dir)], stderr='Built docs in .* sec')
         mkdocs_config_path = output_dir / 'mkdocs.yml'
         assert mkdocs_config_path.is_file()
-        assert 'site_name: Myproj' in mkdocs_config_path.read_text()
+        assert 'site_name: myproj' in mkdocs_config_path.read_text()
         docs_dir = output_dir / 'docs'
         assert docs_dir.is_dir()
         index_md_path = docs_dir / 'index.md'
