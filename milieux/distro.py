@@ -24,6 +24,19 @@ def get_requirements(requirements: Optional[Sequence[AnyPath]] = None, distros: 
         reqs += [str(Distro(name).path) for name in distros]
     return reqs
 
+def _parse_package_from_requirements(line: str) -> Optional[str]:
+    """Given a line in a requirements file, returns a package name if the line is nontrivial, stripping off any '#' comments."""
+    line = line.split('#', maxsplit=1)[0].strip()
+    return line or None
+
+def get_packages_from_requirements(requirements: AnyPath) -> list[str]:
+    """Given a requirements file, returns a list of packages found therein."""
+    try:
+        lines = read_lines(requirements)
+    except (FileNotFoundError, IsADirectoryError) as e:
+        raise NoSuchRequirementsFileError(str(requirements)) from e
+    return [pkg for line in lines if (pkg := _parse_package_from_requirements(line))]
+
 def get_packages(packages: Optional[Sequence[str]] = None, requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[Sequence[str]] = None) -> list[str]:
     """Given a list of packages and a list of requirements files, gets a list of all packages therein.
     Deduplicates any identical entries, and sorts alphabetically."""
@@ -35,10 +48,7 @@ def get_packages(packages: Optional[Sequence[str]] = None, requirements: Optiona
         pkgs.update(packages)
     if reqs:
         for req in reqs:
-            try:
-                pkgs.update(stripped for line in read_lines(req) if (stripped := line.strip()))
-            except (FileNotFoundError, IsADirectoryError) as e:
-                raise NoSuchRequirementsFileError(str(req)) from e
+            pkgs.update(get_packages_from_requirements(req))
     return sorted(pkgs)
 
 

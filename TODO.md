@@ -2,6 +2,31 @@
 
 # TODO
 
+- Newlines in function signatures? Default width?
+- Allow comments in requirements files
+```python
+try:
+    lines = read_lines(req)
+except ... as e:
+    raise NoSuch...
+for line in lines:
+    line = line.strip()
+    if (not line) or line.startswith('#'):  # ignore comments
+        continue
+    pkgs.add(line)
+```
+- Accept distribution name *or* import name, e.g.
+```python
+import importlib.metadata
+importlib.metadata.distribution('beautifulsoup4').files
+```
+    Then find packages among the list of files.
+- List all packages in top-level navbar (avoid the one layer of nesting).
+- Non-strict mode for missing packages in list?
+
+
+---
+
 - Subcommands
     - Build/publish
         - May just be thin wrappers for `uv build`?

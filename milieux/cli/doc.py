@@ -120,7 +120,7 @@ class DocServe(CLIDataclass, _DocBuild, command_name='serve'):
     )
     port: int = field(
         default=8080,
-        metadata={'help': 'port on which to run HTTP serve', 'default_help': True}
+        metadata={'help': 'port on which to run HTTP server', 'default_help': True}
     )
     no_browser: bool = field(
         default=False,
