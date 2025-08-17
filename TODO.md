@@ -8,7 +8,6 @@ import importlib.metadata
 importlib.metadata.distribution('beautifulsoup4').files
 ```
     Then find packages among the list of files.
-- Non-strict mode for missing packages in list?
 
 ---
 

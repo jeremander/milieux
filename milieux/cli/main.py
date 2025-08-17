@@ -20,7 +20,7 @@ from milieux.errors import MilieuxError
 
 def _exit_with_error(msg: str) -> None:
     if msg:
-        logger.error(f'[bold red]ERROR[/] - [red]{msg}[/]')
+        logger.error(f'[red]{msg}[/]')
     sys.exit(1)
 
 def _handle_error(exc: BaseException) -> None:

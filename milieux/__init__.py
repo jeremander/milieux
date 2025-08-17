@@ -22,7 +22,7 @@ theme = Theme({'log.time': 'cyan'})
 console = Console(stderr=True, theme=theme)
 handler = RichHandler(
     omit_repeated_times=False,
-    show_level=False,
+    show_level=True,
     show_path=False,
     markup=True,
     console=console,

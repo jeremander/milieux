@@ -10,7 +10,7 @@ import tomli  # TODO: use tomllib once minimum Python 3.11 is supported
 from typing_extensions import Doc
 
 from milieux import logger
-from milieux.errors import DocBuildError, PackageNotFoundError, TemplateError
+from milieux.errors import DocBuildError, NoPackagesError, PackageNotFoundError, TemplateError
 from milieux.utils import ensure_dir, run_command
 
 
@@ -100,11 +100,21 @@ class DocSetup:
     home_template: Annotated[Path, Doc('jinja template for index.md')] = DEFAULT_DOC_HOME_TEMPLATE
     extra_css_template: Annotated[Path, Doc('jinja template for extra.css')] = DEFAULT_EXTRA_CSS_TEMPLATE
     verbose: Annotated[bool, Doc('be verbose')] = False
+    allow_missing: Annotated[bool, Doc("warn (don't error) on missing packages")] = False
 
-    @property
-    def package_paths(self) -> list[Path]:
-        """Resolves package names to absolute paths."""
-        return [resolve_package_path(pkg_str) for pkg_str in self.packages]
+    def __post_init__(self) -> None:
+        # resolve package names to absolute paths
+        self._package_paths = []
+        for pkg_str in self.packages:
+            try:
+                self._package_paths.append(resolve_package_path(pkg_str))
+            except PackageNotFoundError as e:
+                if self.allow_missing:
+                    logger.warning(str(e))
+                else:
+                    raise
+        if not self._package_paths:
+            raise NoPackagesError('No packages found')
 
     @property
     def template_vars(self) -> dict[str, Any]:
@@ -112,7 +122,7 @@ class DocSetup:
         return {
             'SITE_NAME': self.site_name,
             'THEME': self.theme,
-            'PKG_PATHS': [str(path) for path in self.package_paths],
+            'PKG_PATHS': [str(path) for path in self._package_paths],
             'DEFAULT_SITE_NAME': DEFAULT_SITE_NAME,
         }
 

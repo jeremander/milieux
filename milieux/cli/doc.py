@@ -76,6 +76,10 @@ class _DocBuild:
             'help': 'be verbose',
         }
     )
+    allow_missing: bool = field(
+        default=False,
+        metadata={'help': "warn (don't error) on missing packages"}
+    )
 
     def __post_init__(self) -> None:
         self._site_name = self.site_name
@@ -95,6 +99,7 @@ class _DocBuild:
             config_template=self.config_template or DEFAULT_DOC_CONFIG_TEMPLATE,
             home_template=self.home_template or DEFAULT_DOC_HOME_TEMPLATE,
             verbose=self.verbose,
+            allow_missing=self.allow_missing,
         )
 
 
