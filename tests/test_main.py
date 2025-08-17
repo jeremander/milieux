@@ -245,6 +245,11 @@ class TestDoc:
         output_regex = r'mkdocs serve -f .+ --dev-addr localhost:8080'
         check_main(['doc', 'serve', '-p', 'myproj'], stdout=output_regex)
 
+    def test_missing_package(self, tmp_path):
+        output_dir = tmp_path / 'output'
+        check_main(['doc', 'build', '-p', 'fake', '-o', str(output_dir)], stderr='Package named .* not found', success=False)
+        check_main(['doc', 'build', '-p', 'fake', '-o', str(output_dir), '--allow-missing'], stderr='No packages found', success=False)
+
 
 class TestEnv:
 
