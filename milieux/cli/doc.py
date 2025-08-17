@@ -7,7 +7,7 @@ from fancy_dataclass import ArgparseDataclass, CLIDataclass
 
 from milieux import logger
 from milieux.distro import get_packages
-from milieux.doc import DEFAULT_DOC_CONFIG_TEMPLATE, DEFAULT_DOC_HOME_TEMPLATE, DEFAULT_SITE_NAME, DocSetup
+from milieux.doc import DEFAULT_DOC_CONFIG_TEMPLATE, DEFAULT_DOC_HOME_TEMPLATE, DEFAULT_MKDOCS_THEME, DEFAULT_SITE_NAME, DocSetup, MkdocsTheme
 
 
 @dataclass
@@ -57,6 +57,10 @@ class _DocBuild:
         default=None,
         metadata={'help': 'name of top-level site'}
     )
+    theme: MkdocsTheme = field(
+        default=DEFAULT_MKDOCS_THEME,
+        metadata={'help': 'name of mkdocs theme', 'default_help': True}
+    )
     config_template: Optional[Path] = field(
         default=None,
         metadata={'help': 'jinja template for mkdocs.yml'}
@@ -87,6 +91,7 @@ class _DocBuild:
         return DocSetup(
             site_name=self._site_name,
             packages=self.pkg_args.all_packages,
+            theme=self.theme,
             config_template=self.config_template or DEFAULT_DOC_CONFIG_TEMPLATE,
             home_template=self.home_template or DEFAULT_DOC_HOME_TEMPLATE,
             verbose=self.verbose,

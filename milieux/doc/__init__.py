@@ -3,7 +3,7 @@ import importlib
 from pathlib import Path
 from subprocess import CalledProcessError
 import tempfile
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 import jinja2
 import tomli  # TODO: use tomllib once minimum Python 3.11 is supported
@@ -14,9 +14,13 @@ from milieux.errors import DocBuildError, PackageNotFoundError, TemplateError
 from milieux.utils import ensure_dir, run_command
 
 
+# available themes for mkdocs
+MkdocsTheme = Literal['readthedocs', 'material']
+
 DEFAULT_DOC_CONFIG_TEMPLATE = Path(__file__).with_name('doc_template.yml.jinja')
 DEFAULT_DOC_HOME_TEMPLATE = Path(__file__).with_name('home_template.md.jinja')
 DEFAULT_SITE_NAME = 'API Docs'
+DEFAULT_MKDOCS_THEME = 'readthedocs'
 
 
 def resolve_local_package_path(path: Path) -> Path:
@@ -90,6 +94,7 @@ class DocSetup:
     """Class for building API reference documentation."""
     site_name: Annotated[str, Doc('Name of top-level documentation page')]
     packages: Annotated[list[str], Doc('List of packages to include in docs')]
+    theme: Annotated[MkdocsTheme, Doc('Name of mkdocs theme to use')] = DEFAULT_MKDOCS_THEME
     config_template: Annotated[Path, Doc('jinja template for mkdocs.yml')] = DEFAULT_DOC_CONFIG_TEMPLATE
     home_template: Annotated[Path, Doc('jinja template for index.md')] = DEFAULT_DOC_HOME_TEMPLATE
     verbose: Annotated[bool, Doc('be verbose')] = False
@@ -104,6 +109,7 @@ class DocSetup:
         """Gets a dict from template variables to values."""
         return {
             'SITE_NAME': self.site_name,
+            'THEME': self.theme,
             'PKG_PATHS': [str(path) for path in self.package_paths],
             'DEFAULT_SITE_NAME': DEFAULT_SITE_NAME,
         }

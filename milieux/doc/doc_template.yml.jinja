@@ -1,6 +1,7 @@
 site_name: {{SITE_NAME}}
 
 theme:
+{% if THEME == 'material' %}
   name: material
   features:
     - navigation.footer
@@ -14,6 +15,13 @@ theme:
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
+{% else %}
+  name: readthedocs
+  highlightjs: true
+  hljs_languages:
+    - python
+  collapse_navigation: false
+{% endif %}
 
 plugins:
 - search
@@ -36,7 +44,13 @@ plugins:
           members_order: source
           merge_init_into_class: true
           parameter_headings: true
-          # show_if_no_docstring: true
+          # separate function name from signature
+          # (required for formatting signature and removing Annotated)
+          separate_signature: true
+          # line length for formatting signature (black or ruff must be installed)
+          line_length: 80
+          # show item even if it has no docstring
+          show_if_no_docstring: false
           show_root_heading: true
           show_signature: true
           show_signature_annotations: true

@@ -27,6 +27,7 @@ dependencies = [
   "mkdocs-material",  # Material theme for mkdocs
   "mkdocstrings[python]",  # auto-generation of mkdocs API docs from Python code
   "rich",  # pretty terminal colors/tables
+  "ruff",
   "tomli",  # TOML parsing
   "typing_extensions >= 4.10",  # extra types
   "uv >= 0.5.16",  # dependency management
