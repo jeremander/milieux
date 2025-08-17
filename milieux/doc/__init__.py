@@ -19,8 +19,9 @@ MkdocsTheme = Literal['readthedocs', 'material']
 
 DEFAULT_DOC_CONFIG_TEMPLATE = Path(__file__).with_name('doc_template.yml.jinja')
 DEFAULT_DOC_HOME_TEMPLATE = Path(__file__).with_name('home_template.md.jinja')
+DEFAULT_EXTRA_CSS_TEMPLATE = Path(__file__).with_name('extra.css.jinja')
 DEFAULT_SITE_NAME = 'API Docs'
-DEFAULT_MKDOCS_THEME = 'readthedocs'
+DEFAULT_MKDOCS_THEME: MkdocsTheme = 'readthedocs'
 
 
 def resolve_local_package_path(path: Path) -> Path:
@@ -97,6 +98,7 @@ class DocSetup:
     theme: Annotated[MkdocsTheme, Doc('Name of mkdocs theme to use')] = DEFAULT_MKDOCS_THEME
     config_template: Annotated[Path, Doc('jinja template for mkdocs.yml')] = DEFAULT_DOC_CONFIG_TEMPLATE
     home_template: Annotated[Path, Doc('jinja template for index.md')] = DEFAULT_DOC_HOME_TEMPLATE
+    extra_css_template: Annotated[Path, Doc('jinja template for extra.css')] = DEFAULT_EXTRA_CSS_TEMPLATE
     verbose: Annotated[bool, Doc('be verbose')] = False
 
     @property
@@ -122,6 +124,10 @@ class DocSetup:
         """Renders the index.md homepage Markdown as a string."""
         return render_template(self.home_template, **self.template_vars)
 
+    def render_extra_css(self) -> str:
+        """Renders the extra.css file for extra styling, as a string."""
+        return render_template(self.extra_css_template, **self.template_vars)
+
     def setup_mkdocs(self, output_dir: Path) -> Path:
         """Sets up the directory in which to run mkdocs, writing mkdocs.yml (config file) and index.md (homepage).
         Returns the path to the config file."""
@@ -133,6 +139,9 @@ class DocSetup:
         index_path = docs_dir / 'index.md'
         logger.info(f'Writing {index_path}')
         index_path.write_text(self.render_mkdocs_index())
+        extra_css_path = docs_dir / 'extra.css'
+        logger.info(f'Writing {extra_css_path}')
+        extra_css_path.write_text(self.render_extra_css())
         return config_path
 
     def _run_command(self, cmd: list[str]) -> None:
