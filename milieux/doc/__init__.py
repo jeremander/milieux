@@ -3,7 +3,7 @@ import importlib
 from pathlib import Path
 from subprocess import CalledProcessError
 import tempfile
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Optional
 
 import jinja2
 import tomli  # TODO: use tomllib once minimum Python 3.11 is supported
@@ -52,22 +52,21 @@ def resolve_local_package_path(path: Path) -> Path:
             return child
     raise FileNotFoundError(f'No package dir found in {path}')
 
+def get_package_names_from_project(proj_str: str) -> Optional[list[str]]:
+    """Resolves a Python project (distribution) name to one or more package names."""
+    try:
+        dist = importlib.metadata.distribution(proj_str)
+    except importlib.metadata.PackageNotFoundError:
+        return None
+    # assume packages are top-level directories containing __init__.py
+    package_names = []
+    for p in (dist.files or []):
+        if (len(p.parts) == 2) and (p.parts[1] == '__init__.py'):
+            package_names.append(p.parts[0])
+    return package_names
+
 def resolve_package_path(pkg_str: str) -> Path:
     """Resolves a package name to an absolute path."""
-    # remove any flags in the package string
-    toks = [tok for tok in pkg_str.split() if not tok.startswith('-')]
-    if len(toks) != 1:
-        raise PackageNotFoundError(pkg_str)
-    pkg_str = toks[0]
-    if '/' in pkg_str:  # pkg_str is a path
-        if (path := Path(pkg_str)).exists():
-            # resolve local package directory
-            try:
-                return resolve_local_package_path(path)
-            except FileNotFoundError as e:
-                raise PackageNotFoundError(pkg_str) from e
-        raise PackageNotFoundError(pkg_str)
-    # TODO: check for the package within an environment?
     try:
         mod = importlib.import_module(pkg_str)
     except ModuleNotFoundError as e:
@@ -78,6 +77,31 @@ def resolve_package_path(pkg_str: str) -> Path:
     if path.name ==  '__init__.py':
         path = path.parent
     return path
+
+def resolve_project_or_package_paths(proj_or_pkg_str: str) -> list[Path]:
+    """Resolves a project or package name to a list of absolute paths."""
+    # remove any flags in the package string
+    toks = [tok for tok in proj_or_pkg_str.split() if not tok.startswith('-')]
+    if len(toks) != 1:
+        raise PackageNotFoundError(proj_or_pkg_str)
+    proj_or_pkg_str = toks[0]
+    if '/' in proj_or_pkg_str:  # string is a path
+        if (path := Path(proj_or_pkg_str)).exists():
+            # resolve local package directory
+            try:
+                return [resolve_local_package_path(path)]
+            except FileNotFoundError as e:
+                raise PackageNotFoundError(proj_or_pkg_str) from e
+        raise PackageNotFoundError(proj_or_pkg_str)
+    # TODO: check for the package within an environment?
+    try:
+        return [resolve_package_path(proj_or_pkg_str)]
+    except PackageNotFoundError:
+        # try interpreting the string as a project instead of a package
+        pkg_names = get_package_names_from_project(proj_or_pkg_str)
+        if pkg_names is None:
+            raise
+        return [resolve_package_path(pkg_name) for pkg_name in pkg_names]
 
 def render_template(template: Path, **template_vars: Any) -> str:
     """Renders a jinja template with the given template variables as a string."""
@@ -105,9 +129,9 @@ class DocSetup:
     def __post_init__(self) -> None:
         # resolve package names to absolute paths
         self._package_paths = []
-        for pkg_str in self.packages:
+        for proj_or_pkg_str in self.packages:
             try:
-                self._package_paths.append(resolve_package_path(pkg_str))
+                self._package_paths.extend(resolve_project_or_package_paths(proj_or_pkg_str))
             except PackageNotFoundError as e:
                 if self.allow_missing:
                     logger.warning(str(e))

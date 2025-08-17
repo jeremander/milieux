@@ -2,7 +2,7 @@ import importlib
 
 import pytest
 
-from milieux.doc import resolve_local_package_path, resolve_package_path
+from milieux.doc import resolve_local_package_path, resolve_package_path, resolve_project_or_package_paths
 from milieux.errors import PackageNotFoundError
 
 
@@ -13,8 +13,8 @@ name = "myproj"
 
 def _check_resolve_local_package_path(input_path, output_path):
     assert resolve_local_package_path(input_path) == output_path
-    assert resolve_package_path(str(input_path)) == output_path
-    assert resolve_package_path(f'-e {input_path}') == output_path
+    assert resolve_project_or_package_paths(str(input_path)) == [output_path]
+    assert resolve_project_or_package_paths(f'-e {input_path}') == [output_path]
 
 def test_resolve_local_package_path(tmp_path):
     proj_dir = tmp_path / 'myproj'
