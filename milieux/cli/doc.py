@@ -7,7 +7,7 @@ from fancy_dataclass import ArgparseDataclass, CLIDataclass
 
 from milieux import logger
 from milieux.distro import get_packages
-from milieux.doc import DEFAULT_DOC_CONFIG_TEMPLATE, DEFAULT_DOC_HOME_TEMPLATE, DEFAULT_MKDOCS_THEME, DEFAULT_SITE_NAME, DocSetup, MkdocsTheme
+from milieux.doc import DEFAULT_DOC_CONFIG_TEMPLATE, DEFAULT_DOC_HOME_TEMPLATE, DEFAULT_EXTRA_CSS_TEMPLATE, DEFAULT_MKDOCS_THEME, DEFAULT_SITE_NAME, DocSetup, MkdocsTheme
 
 
 @dataclass
@@ -69,6 +69,10 @@ class _DocBuild:
         default=None,
         metadata={'help': 'jinja template for index.md'}
     )
+    extra_css_template: Optional[Path] = field(
+        default=None,
+        metadata={'help': 'jinja template for extra.css'}
+    )
     verbose: bool = field(
         default=False,
         metadata={
@@ -98,6 +102,7 @@ class _DocBuild:
             theme=self.theme,
             config_template=self.config_template or DEFAULT_DOC_CONFIG_TEMPLATE,
             home_template=self.home_template or DEFAULT_DOC_HOME_TEMPLATE,
+            extra_css_template=self.extra_css_template or DEFAULT_EXTRA_CSS_TEMPLATE,
             verbose=self.verbose,
             allow_missing=self.allow_missing,
         )

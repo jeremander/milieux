@@ -198,19 +198,27 @@ milieux doc build -d my_distro -o docs
 milieux doc serve -p my_package
 ```
 
-This uses [mkdocs](https://www.mkdocs.org), [mkdocs-material](https://squidfunk.github.io/mkdocs-material/), and [mkdocs-api-autonav](https://github.com/tlambert03/mkdocs-api-autonav/) to produce the documentation.
+This uses [mkdocs](https://www.mkdocs.org), and [mkdocs-api-autonav](https://github.com/tlambert03/mkdocs-api-autonav/), and (optionally) [mkdocs-material](https://squidfunk.github.io/mkdocs-material/) to produce the documentation.
 
 #### Customization
 
-`milieux` does not (yet) expose much in the way of customization, but some things may be controlled using [jinja](https://jinja.palletsprojects.com/) templates.
+`milieux` does not (yet) expose much in the way of customization. At present, you may choose from the following `mkdocs` themes using `--theme THEME_NAME`:
+
+- `readthedocs` (default): pre-installed [readthedocs](https://www.mkdocs.org/user-guide/choosing-your-theme/#readthedocs) theme
+- `material`: [mkdocs-material](https://squidfunk.github.io/mkdocs-material/) theme
+
+Additional things may be controlled using [jinja](https://jinja.palletsprojects.com/) templates.
 
 To customize the `mkdocs` settings, you can provide a jinja YAML template file to `--config-template`. The default is [doc_template.yml.jinja](milieux/doc/doc_template.yml.jinja).
 
 To customize the home page (`index.html`), you can provide a jinja Markdown template file to `--home-template`. The default is [home_template.md.jinja](milieux/doc/home_template.md.jinja).
 
-Two template variables may be used within the templates. Their values will be passed in based on other command-line arguments:
+To provide extra CSS styling (`extra.css`), you can provide a jinja Markdown template file to `--extra-css-template`. The default is [extra.css.jinja](milieux/doc/extra.css.jinja).
+
+Several template variables may be used within the templates. Their values will be passed in based on other command-line arguments:
 
 - `SITE_NAME`: based on `--site-name` (if provided), or the distro/package name (if there is only one), or the default name "API Docs" otherwise.
+- `THEME`: the value of `--theme`. This is the theme used for `mkdocs`.
 - `PKG_PATHS`: list of paths to each of the packages to be included in the reference docs. This is derived from the list of distros, requirements, and packages provided by the user.
 
 ### `config`: Manage configurations

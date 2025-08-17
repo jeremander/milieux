@@ -2,14 +2,6 @@
 
 # TODO
 
-- Accept distribution name *or* import name, e.g.
-```python
-import importlib.metadata
-importlib.metadata.distribution('beautifulsoup4').files
-```
-    Then find packages among the list of files.
----
-
 - Subcommands
     - Build/publish
         - May just be thin wrappers for `uv build`?
