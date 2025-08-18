@@ -8,7 +8,8 @@ from typing_extensions import Doc, Self
 
 from milieux import logger
 from milieux.config import get_config
-from milieux.errors import DistroExistsError, InvalidDistroError, NoPackagesError, NoSuchDistroError, NoSuchRequirementsFileError
+from milieux.errors import DistroExistsError, InvalidDistroError, NoPackagesError, NoSuchDistroError
+from milieux.package import get_packages_from_requirements
 from milieux.utils import AnyPath, distro_sty, ensure_dir, eprint, read_lines, run_command
 
 
@@ -23,19 +24,6 @@ def get_requirements(requirements: Optional[Sequence[AnyPath]] = None, distros: 
     if distros:  # get requirements path from distro name
         reqs += [str(Distro(name).path) for name in distros]
     return reqs
-
-def _parse_package_from_requirements(line: str) -> Optional[str]:
-    """Given a line in a requirements file, returns a package name if the line is nontrivial, stripping off any '#' comments."""
-    line = line.split('#', maxsplit=1)[0].strip()
-    return line or None
-
-def get_packages_from_requirements(requirements: AnyPath) -> list[str]:
-    """Given a requirements file, returns a list of packages found therein."""
-    try:
-        lines = read_lines(requirements)
-    except (FileNotFoundError, IsADirectoryError) as e:
-        raise NoSuchRequirementsFileError(str(requirements)) from e
-    return [pkg for line in lines if (pkg := _parse_package_from_requirements(line))]
 
 def get_packages(packages: Optional[Sequence[str]] = None, requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[Sequence[str]] = None) -> list[str]:
     """Given a list of packages and a list of requirements files, gets a list of all packages therein.

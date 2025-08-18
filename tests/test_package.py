@@ -1,6 +1,6 @@
 import pytest
 
-from milieux.distro import _parse_package_from_requirements
+from milieux.package import _parse_package_from_requirements
 
 
 @pytest.mark.parametrize(['line', 'output'], [

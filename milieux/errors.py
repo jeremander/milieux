@@ -40,10 +40,16 @@ class NoSuchEnvironmentError(EnvError):
         self.env_name = env_name
         super().__init__(f'No environment named {env_sty(env_name)}')
 
-class NoPackagesError(MilieuxError):
+class PackageError(MilieuxError):
+    """Error related to a package."""
+
+class NoPackagesError(PackageError):
     """Error for when no packages are provided."""
 
-class PackageNotFoundError(MilieuxError):
+class InvalidPackageError(DistroError):
+    """Error for when a package is invalid."""
+
+class PackageNotFoundError(PackageError):
     """Error for when a package was not found."""
     def __init__(self, pkg_name: str) -> None:
         self.pkg_name = pkg_name

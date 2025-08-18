@@ -3,14 +3,15 @@ import importlib
 from pathlib import Path
 from subprocess import CalledProcessError
 import tempfile
-from typing import Annotated, Any, Literal, Optional
+from typing import Annotated, Any, Literal
 
 import jinja2
 import tomli  # TODO: use tomllib once minimum Python 3.11 is supported
 from typing_extensions import Doc
 
 from milieux import logger
-from milieux.errors import DocBuildError, NoPackagesError, PackageNotFoundError, TemplateError
+from milieux.errors import DocBuildError, NoPackagesError, PackageError, PackageNotFoundError, TemplateError
+from milieux.package import get_requirement_name
 from milieux.utils import ensure_dir, run_command
 
 
@@ -52,12 +53,13 @@ def resolve_local_package_path(path: Path) -> Path:
             return child
     raise FileNotFoundError(f'No package dir found in {path}')
 
-def get_package_names_from_project(proj_str: str) -> Optional[list[str]]:
+def get_package_names_from_project(proj_str: str) -> list[str]:
     """Resolves a Python project (distribution) name to one or more package names."""
+    proj_str = get_requirement_name(proj_str)
     try:
         dist = importlib.metadata.distribution(proj_str)
-    except importlib.metadata.PackageNotFoundError:
-        return None
+    except importlib.metadata.PackageNotFoundError as e:
+        raise PackageNotFoundError(proj_str) from e
     # assume packages are top-level directories containing __init__.py
     package_names = []
     for p in (dist.files or []):
@@ -66,13 +68,14 @@ def get_package_names_from_project(proj_str: str) -> Optional[list[str]]:
     return package_names
 
 def resolve_package_path(pkg_str: str) -> Path:
-    """Resolves a package name to an absolute path."""
+    """Resolves a package name (or a requirement string like "pkg_name>=2.7") to an absolute path."""
+    pkg_name = get_requirement_name(pkg_str)
     try:
-        mod = importlib.import_module(pkg_str)
+        mod = importlib.import_module(pkg_name)
     except ModuleNotFoundError as e:
-        raise PackageNotFoundError(pkg_str) from e
+        raise PackageNotFoundError(pkg_name) from e
     if mod.__file__ is None:
-        raise PackageNotFoundError(pkg_str)
+        raise PackageNotFoundError(pkg_name)
     path = Path(mod.__file__)
     if path.name ==  '__init__.py':
         path = path.parent
@@ -86,6 +89,7 @@ def resolve_project_or_package_paths(proj_or_pkg_str: str) -> list[Path]:
         raise PackageNotFoundError(proj_or_pkg_str)
     proj_or_pkg_str = toks[0]
     if '/' in proj_or_pkg_str:  # string is a path
+        proj_or_pkg_str = proj_or_pkg_str.removeprefix('file://')
         if (path := Path(proj_or_pkg_str)).exists():
             # resolve local package directory
             try:
@@ -96,11 +100,9 @@ def resolve_project_or_package_paths(proj_or_pkg_str: str) -> list[Path]:
     # TODO: check for the package within an environment?
     try:
         return [resolve_package_path(proj_or_pkg_str)]
-    except PackageNotFoundError:
+    except PackageError:
         # try interpreting the string as a project instead of a package
         pkg_names = get_package_names_from_project(proj_or_pkg_str)
-        if pkg_names is None:
-            raise
         return [resolve_package_path(pkg_name) for pkg_name in pkg_names]
 
 def render_template(template: Path, **template_vars: Any) -> str:

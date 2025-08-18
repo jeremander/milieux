@@ -1,14 +1,12 @@
-from contextlib import contextmanager, nullcontext, redirect_stderr, redirect_stdout, suppress
+from contextlib import contextmanager, nullcontext, redirect_stderr, redirect_stdout
 from io import StringIO
 import logging
 from pathlib import Path
 import re
 import sys
-from typing import Annotated, Callable, Optional, Union
+from typing import Annotated, Optional, Union
 from unittest.mock import patch
 
-from rich.console import Console
-from rich.highlighter import NullHighlighter
 from typing_extensions import Doc
 
 from milieux import logger

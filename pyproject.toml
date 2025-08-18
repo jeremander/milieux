@@ -26,8 +26,9 @@ dependencies = [
   "mkdocs-api-autonav",  # auto-generation of mkdocs templates
   "mkdocs-material",  # Material theme for mkdocs
   "mkdocstrings[python]",  # auto-generation of mkdocs API docs from Python code
+  "packaging",  # resolving requirement strings to package names
   "rich",  # pretty terminal colors/tables
-  "ruff",
+  "ruff",  # formatting function signatures
   "tomli",  # TOML parsing
   "typing_extensions >= 4.10",  # extra types
   "uv >= 0.5.16",  # dependency management
