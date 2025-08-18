@@ -8,9 +8,9 @@ from typing_extensions import Doc, Self
 
 from milieux import logger
 from milieux.config import get_config
-from milieux.errors import DistroExistsError, InvalidDistroError, NoPackagesError, NoSuchDistroError
-from milieux.package import get_packages_from_requirements
-from milieux.utils import AnyPath, distro_sty, ensure_dir, eprint, read_lines, run_command
+from milieux.errors import DistroExistsError, InvalidDistroError, NoSuchDistroError
+from milieux.package import Requirement, get_requirements_from_file
+from milieux.utils import AnyPath, distro_sty, ensure_dir, eprint, run_command
 
 
 def get_distro_base_dir() -> Path:
@@ -18,26 +18,31 @@ def get_distro_base_dir() -> Path:
     cfg = get_config()
     return ensure_dir(cfg.distro_dir_path)
 
-def get_requirements(requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[Sequence[str]] = None) -> list[str]:
+def get_requirements_files(
+    requirements: Optional[Sequence[AnyPath]] = None,
+    distros: Optional[Sequence[str]] = None,
+) -> list[Path]:
     """Helper function to get requirements files, given a list of requirements files and/or distro names."""
-    reqs = [str(req) for req in requirements] if requirements else []
+    reqs = [Path(req) for req in requirements] if requirements else []
     if distros:  # get requirements path from distro name
-        reqs += [str(Distro(name).path) for name in distros]
+        reqs += [Distro(name).path for name in distros]
     return reqs
 
-def get_packages(packages: Optional[Sequence[str]] = None, requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[Sequence[str]] = None) -> list[str]:
-    """Given a list of packages and a list of requirements files, gets a list of all packages therein.
+def get_requirements(
+    packages: Optional[Sequence[str]] = None,
+    requirements: Optional[Sequence[AnyPath]] = None,
+    distros: Optional[Sequence[str]] = None,
+) -> list[Requirement]:
+    """Given a list of packages, requirements files, and distros, gets a list of all Requirements therein.
     Deduplicates any identical entries, and sorts alphabetically."""
-    reqs = get_requirements(requirements, distros)
-    if (not packages) and (not reqs):
-        raise NoPackagesError('Must specify at least one package')
-    pkgs: set[str] = set()
+    req_paths = get_requirements_files(requirements, distros)
+    reqs: set[Requirement] = set()
     if packages:
-        pkgs.update(packages)
-    if reqs:
-        for req in reqs:
-            pkgs.update(get_packages_from_requirements(req))
-    return sorted(pkgs)
+        reqs.update(Requirement.from_string(pkg) for pkg in packages)
+    if req_paths:
+        for req_path in req_paths:
+            reqs.update(get_requirements_from_file(req_path))
+    return sorted(reqs)
 
 
 @dataclass
@@ -63,14 +68,9 @@ class Distro:
             raise NoSuchDistroError(self.name)
         return self._path
 
-    def get_packages(self) -> list[str]:
-        """Gets the list of packages in the distro."""
-        packages = []
-        for line in read_lines(self.path):
-            line = line.strip()
-            if not line.startswith('#'):  # skip comments
-                packages.append(line)
-        return packages
+    def get_requirements(self) -> list[Requirement]:
+        """Gets the list of Requirements in the distro."""
+        return get_requirements_from_file(self.path)
 
     def lock(self, annotate: bool = False) -> str:
         """Locks the packages in a distro to their pinned versions.
@@ -86,15 +86,7 @@ class Distro:
             raise InvalidDistroError('\n' + e.stderr) from e
 
     @classmethod
-    def new(cls,
-        name: str,
-        packages: Optional[list[str]] = None,
-        requirements: Optional[Sequence[AnyPath]] = None,
-        distros: Optional[list[str]] = None,
-        force: bool = False
-    ) -> Self:
-        """Creates a new distro."""
-        packages = get_packages(packages, requirements, distros)
+    def _new(cls, name: str, reqs_str: str, force: bool = False) -> Self:
         distro_base_dir = get_distro_base_dir()
         distro_path = distro_base_dir / f'{name}.txt'
         if distro_path.exists():
@@ -105,11 +97,22 @@ class Distro:
             else:
                 raise DistroExistsError(msg)
         logger.info(f'Creating distro {distro_sty(name)}')
-        with open(distro_path, 'w') as f:
-            for pkg in packages:
-                print(pkg, file=f)
+        distro_path.write_text(reqs_str)
         logger.info(f'Wrote {distro_sty(name)} requirements to {distro_path}')
         return cls(name, distro_base_dir)
+
+    @classmethod
+    def new(cls,
+        name: str,
+        packages: Optional[list[str]] = None,
+        requirements: Optional[Sequence[AnyPath]] = None,
+        distros: Optional[list[str]] = None,
+        force: bool = False,
+    ) -> Self:
+        """Creates a new distro."""
+        reqs = get_requirements(packages, requirements, distros)
+        reqs_str = '\n'.join(map(str, reqs)) + '\n'
+        return cls._new(name, reqs_str, force=force)
 
     def remove(self) -> None:
         """Deletes the distro."""
@@ -119,11 +122,11 @@ class Distro:
         logger.info(f'Deleted {path}')
 
     def show(self) -> None:
-        """Prints out the packages in the distro."""
+        """Prints out the requirements in the distro."""
         eprint(f'Distro {distro_sty(self.name)} is located at: {self.path}')
         eprint('──────────\n [bold]Packages[/]\n──────────')
-        for pkg in self.get_packages():
-            print(pkg)
+        for req in self.get_requirements():
+            print(req)
 
     # NOTE: due to a bug in mypy (https://github.com/python/mypy/issues/15047), this method must come last
     @classmethod

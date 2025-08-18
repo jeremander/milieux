@@ -6,7 +6,7 @@ from typing import Optional, Union
 from fancy_dataclass import ArgparseDataclass, CLIDataclass
 
 from milieux import logger
-from milieux.distro import get_packages
+from milieux.distro import get_requirements
 from milieux.doc import DEFAULT_DOC_CONFIG_TEMPLATE, DEFAULT_DOC_HOME_TEMPLATE, DEFAULT_EXTRA_CSS_TEMPLATE, DEFAULT_MKDOCS_THEME, DEFAULT_SITE_NAME, DocSetup, MkdocsTheme
 
 
@@ -29,7 +29,9 @@ class PkgArgs(ArgparseDataclass):
     @property
     def all_packages(self) -> list[str]:
         """Gets a list of all packages."""
-        return get_packages(self.packages, self.requirements, self.distros)
+        reqs = get_requirements(self.packages, self.requirements, self.distros)
+        # TODO: get Python packages from requirements
+        return [str(req) for req in reqs]
 
     @property
     def default_site_name(self) -> Optional[str]:

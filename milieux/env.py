@@ -14,7 +14,7 @@ from typing_extensions import Doc, Self
 
 from milieux import PROG, logger
 from milieux.config import get_config
-from milieux.distro import get_requirements
+from milieux.distro import get_requirements_files
 from milieux.errors import EnvError, EnvironmentExistsError, MilieuxError, NoPackagesError, NoSuchEnvironmentError, TemplateError
 from milieux.utils import AnyPath, ensure_dir, env_sty, eprint, run_command
 
@@ -149,8 +149,8 @@ class Environment:
     ) -> list[str]:
         """Installs one or more packages into the environment."""
         operation = 'install' if install else 'uninstall'
-        reqs = get_requirements(requirements, distros)
-        if (not editable) and (not packages) and (not reqs):
+        req_paths = get_requirements_files(requirements, distros)
+        if (not editable) and (not packages) and (not req_paths):
             raise NoPackagesError(f'Must specify packages to {operation}')
         cmd = ['uv', 'pip', operation]
         if install:
@@ -158,8 +158,8 @@ class Environment:
         # TODO: extra index URLs?
         if packages:
             cmd.extend(packages)
-        if reqs:
-            cmd.extend(['-r'] + reqs)
+        if req_paths:
+            cmd.extend(['-r'] + [str(path) for path in req_paths])
         return cmd
 
     def activate(self) -> None:
@@ -275,11 +275,11 @@ class Environment:
     def sync(self, requirements: Optional[Sequence[AnyPath]] = None, distros: Optional[list[str]] = None) -> None:
         """Syncs dependencies in a distro or requirements files to the environment.
         NOTE: unlike 'install', this ensures the environment exactly matches the dependencies afterward."""
-        reqs = get_requirements(requirements, distros)
-        if not reqs:
+        req_paths = get_requirements_files(requirements, distros)
+        if not req_paths:
             raise NoPackagesError('Must specify dependencies to sync')
         logger.info(f'Syncing dependencies in {env_sty(self.name)} environment')
-        cmd = ['uv', 'pip', 'sync'] + reqs + get_config().pip.uv_args
+        cmd = ['uv', 'pip', 'sync'] + [str(path) for path in req_paths] + get_config().pip.uv_args
         self.run_command(cmd)
 
     def uninstall(

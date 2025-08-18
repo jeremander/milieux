@@ -58,7 +58,7 @@ class DistroLock(CLIDataclass, command_name='lock'):
             print(output)
         else:
             assert new_name is not None
-            Distro.new(new_name, packages=output.splitlines(), force=self.force)
+            Distro._new(new_name, output, force=self.force)
 
 
 @dataclass
