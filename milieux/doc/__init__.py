@@ -1,17 +1,16 @@
 from dataclasses import dataclass
-import importlib
+from operator import attrgetter
 from pathlib import Path
 from subprocess import CalledProcessError
 import tempfile
 from typing import Annotated, Any, Literal
 
 import jinja2
-import tomli  # TODO: use tomllib once minimum Python 3.11 is supported
 from typing_extensions import Doc
 
 from milieux import logger
-from milieux.errors import DocBuildError, NoPackagesError, PackageError, PackageNotFoundError, TemplateError
-from milieux.package import get_requirement_name
+from milieux.errors import DocBuildError, NoPackagesError, PackageNotFoundError, TemplateError
+from milieux.package import Requirement
 from milieux.utils import ensure_dir, run_command
 
 
@@ -24,86 +23,6 @@ DEFAULT_EXTRA_CSS_TEMPLATE = Path(__file__).with_name('extra.css.jinja')
 DEFAULT_SITE_NAME = 'API Docs'
 DEFAULT_MKDOCS_THEME: MkdocsTheme = 'readthedocs'
 
-
-def resolve_local_package_path(path: Path) -> Path:
-    """Given a path to a local Python project, resolves the top-level package path."""
-    root = Path(path).resolve()
-    pyproject_path = root / 'pyproject.toml'
-    if pyproject_path.exists():
-        with pyproject_path.open('rb') as f:
-            data = tomli.load(f)
-        # try PEP 621 first
-        if (name := data.get('project', {}).get('name')):
-            name = name.replace('-', '_')
-            # infer package dir from name
-            p: Path = root / name
-            if p.is_dir():
-                return p
-            # next, try src subdirectory
-            src_dir = root / 'src'
-            if src_dir.is_dir():
-                p = src_dir / name
-                if p.is_dir():
-                    return p
-    # fallback: look for any subdir with __init__.py
-    for child in root.iterdir():
-        if child.name.startswith('test'):
-            continue
-        if (child / '__init__.py').exists():
-            return child
-    raise FileNotFoundError(f'No package dir found in {path}')
-
-def get_package_names_from_project(proj_str: str) -> list[str]:
-    """Resolves a Python project (distribution) name to one or more package names."""
-    proj_str = get_requirement_name(proj_str)
-    try:
-        dist = importlib.metadata.distribution(proj_str)
-    except importlib.metadata.PackageNotFoundError as e:
-        raise PackageNotFoundError(proj_str) from e
-    # assume packages are top-level directories containing __init__.py
-    package_names = []
-    for p in (dist.files or []):
-        if (len(p.parts) == 2) and (p.parts[1] == '__init__.py'):
-            package_names.append(p.parts[0])
-    return package_names
-
-def resolve_package_path(pkg_str: str) -> Path:
-    """Resolves a package name (or a requirement string like "pkg_name>=2.7") to an absolute path."""
-    pkg_name = get_requirement_name(pkg_str)
-    try:
-        mod = importlib.import_module(pkg_name)
-    except ModuleNotFoundError as e:
-        raise PackageNotFoundError(pkg_name) from e
-    if mod.__file__ is None:
-        raise PackageNotFoundError(pkg_name)
-    path = Path(mod.__file__)
-    if path.name ==  '__init__.py':
-        path = path.parent
-    return path
-
-def resolve_project_or_package_paths(proj_or_pkg_str: str) -> list[Path]:
-    """Resolves a project or package name to a list of absolute paths."""
-    # remove any flags in the package string
-    toks = [tok for tok in proj_or_pkg_str.split() if not tok.startswith('-')]
-    if len(toks) != 1:
-        raise PackageNotFoundError(proj_or_pkg_str)
-    proj_or_pkg_str = toks[0]
-    if '/' in proj_or_pkg_str:  # string is a path
-        proj_or_pkg_str = proj_or_pkg_str.removeprefix('file://')
-        if (path := Path(proj_or_pkg_str)).exists():
-            # resolve local package directory
-            try:
-                return [resolve_local_package_path(path)]
-            except FileNotFoundError as e:
-                raise PackageNotFoundError(proj_or_pkg_str) from e
-        raise PackageNotFoundError(proj_or_pkg_str)
-    # TODO: check for the package within an environment?
-    try:
-        return [resolve_package_path(proj_or_pkg_str)]
-    except PackageError:
-        # try interpreting the string as a project instead of a package
-        pkg_names = get_package_names_from_project(proj_or_pkg_str)
-        return [resolve_package_path(pkg_name) for pkg_name in pkg_names]
 
 def render_template(template: Path, **template_vars: Any) -> str:
     """Renders a jinja template with the given template variables as a string."""
@@ -120,7 +39,7 @@ def render_template(template: Path, **template_vars: Any) -> str:
 class DocSetup:
     """Class for building API reference documentation."""
     site_name: Annotated[str, Doc('Name of top-level documentation page')]
-    packages: Annotated[list[str], Doc('List of packages to include in docs')]
+    requirements: Annotated[list[Requirement], Doc('List of requirements specifying the packages to include in docs')]
     theme: Annotated[MkdocsTheme, Doc('Name of mkdocs theme to use')] = DEFAULT_MKDOCS_THEME
     config_template: Annotated[Path, Doc('jinja template for mkdocs.yml')] = DEFAULT_DOC_CONFIG_TEMPLATE
     home_template: Annotated[Path, Doc('jinja template for index.md')] = DEFAULT_DOC_HOME_TEMPLATE
@@ -131,9 +50,9 @@ class DocSetup:
     def __post_init__(self) -> None:
         # resolve package names to absolute paths
         self._package_paths = []
-        for proj_or_pkg_str in self.packages:
+        for req in self.requirements:
             try:
-                self._package_paths.extend(resolve_project_or_package_paths(proj_or_pkg_str))
+                self._package_paths.extend(req.get_package_paths())
             except PackageNotFoundError as e:
                 if self.allow_missing:
                     logger.warning(str(e))
@@ -141,6 +60,9 @@ class DocSetup:
                     raise
         if not self._package_paths:
             raise NoPackagesError('No packages found')
+        # sort packages by name
+        # TODO: should we use naturalsort?
+        self._package_paths.sort(key=attrgetter('name'))
 
     @property
     def template_vars(self) -> dict[str, Any]:

@@ -22,6 +22,7 @@
             - Otherwise, shows list and prompts to view each one
                 - Once viewed, prompts whether to use
     - `doc`
+        - At present, nothing enforces the required versions if version constraints are provided, since the local package paths are selected regardless of version. Instead, may need to do the work in an isolated environment.
         - Get `pydantic.dataclass` fields to work properly.
         - Improve default landing page via `index.md.jinja`?
         - Enable package-specific customization, e.g. different docstring styles.

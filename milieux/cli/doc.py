@@ -8,6 +8,7 @@ from fancy_dataclass import ArgparseDataclass, CLIDataclass
 from milieux import logger
 from milieux.distro import get_requirements
 from milieux.doc import DEFAULT_DOC_CONFIG_TEMPLATE, DEFAULT_DOC_HOME_TEMPLATE, DEFAULT_EXTRA_CSS_TEMPLATE, DEFAULT_MKDOCS_THEME, DEFAULT_SITE_NAME, DocSetup, MkdocsTheme
+from milieux.package import Requirement
 
 
 @dataclass
@@ -27,11 +28,9 @@ class PkgArgs(ArgparseDataclass):
     )
 
     @property
-    def all_packages(self) -> list[str]:
-        """Gets a list of all packages."""
-        reqs = get_requirements(self.packages, self.requirements, self.distros)
-        # TODO: get Python packages from requirements
-        return [str(req) for req in reqs]
+    def all_requirements(self) -> list[Requirement]:
+        """Gets a list of all Requirements indicated by the arguments."""
+        return get_requirements(self.packages, self.requirements, self.distros)
 
     @property
     def default_site_name(self) -> Optional[str]:
@@ -100,7 +99,7 @@ class _DocBuild:
         assert self._site_name is not None
         return DocSetup(
             site_name=self._site_name,
-            packages=self.pkg_args.all_packages,
+            requirements=self.pkg_args.all_requirements,
             theme=self.theme,
             config_template=self.config_template or DEFAULT_DOC_CONFIG_TEMPLATE,
             home_template=self.home_template or DEFAULT_DOC_HOME_TEMPLATE,
