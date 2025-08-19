@@ -16,8 +16,9 @@ from milieux import PROG, __version__
 from milieux.cli.main import MilieuxCLI
 from milieux.config import Config, user_default_base_dir, user_default_config_path
 from milieux.distro import Distro
-from milieux.doc import DocSetup, resolve_package_path
+from milieux.doc import DocSetup
 from milieux.env import Environment
+from milieux.package import package_name_to_path
 from milieux.utils import read_lines
 
 from . import TEST_DATA_DIR, check_main, cli_args
@@ -223,7 +224,7 @@ class TestDoc:
         # include . in PYTHONPATH so the local package gets picked up
         monkeypatch.setenv('PYTHONPATH', '.' + os.pathsep + os.environ.get('PYTHONPATH', ''))
         monkeypatch.setattr(sys, 'path', ['.'] + sys.path)
-        assert resolve_package_path('myproj') == pkg_dir
+        assert package_name_to_path('myproj') == pkg_dir
         # test build
         check_main(['doc', 'build', '-p', 'myproj', '-o', str(output_dir)], stderr='Built docs in .* sec')
         mkdocs_config_path = output_dir / 'mkdocs.yml'
