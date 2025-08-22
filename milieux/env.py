@@ -142,6 +142,7 @@ class Environment:
     def _install_or_uninstall_cmd(
         self,
         install: bool,
+        *,
         packages: Optional[list[str]] = None,
         requirements: Optional[Sequence[AnyPath]] = None,
         distros: Optional[list[str]] = None,
@@ -222,10 +223,12 @@ class Environment:
 
     def install(
         self,
+        *,
         packages: Optional[list[str]] = None,
         requirements: Optional[Sequence[AnyPath]] = None,
         distros: Optional[list[str]] = None,
         upgrade: bool = False,
+        no_deps: bool = False,
         editable: Optional[str] = None,
     ) -> None:
         """Installs one or more packages into the environment."""
@@ -234,6 +237,8 @@ class Environment:
         cmd = self._install_or_uninstall_cmd(True, packages=packages, requirements=requirements, distros=distros, editable=editable)
         if upgrade:
             cmd.append('--upgrade')
+        if no_deps:
+            cmd.append('--no-deps')
         if editable:
             cmd += ['--editable', editable]
         self.run_command(cmd)
@@ -284,6 +289,7 @@ class Environment:
 
     def uninstall(
         self,
+        *,
         packages: Optional[list[str]] = None,
         requirements: Optional[Sequence[AnyPath]] = None,
         distros: Optional[list[str]] = None
