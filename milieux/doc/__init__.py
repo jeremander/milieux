@@ -1,3 +1,4 @@
+import atexit
 from dataclasses import dataclass
 from operator import attrgetter
 from pathlib import Path
@@ -117,11 +118,13 @@ class DocSetup:
 
     def serve_docs(self, host: str = 'localhost', port: int = 800, no_browser: bool = False) -> None:
         """Serves the API documentation on a live server."""
-        with tempfile.TemporaryDirectory(dir='.') as td:
-            output_dir = Path(td)
-            config_path = self.setup_mkdocs(output_dir)
-            addr = f'{host}:{port}'
-            cmd = ['mkdocs', 'serve', '-f', str(config_path), '--dev-addr', addr]
-            if not no_browser:
-                cmd.append('--open')
-            self._run_command(cmd)
+        td = tempfile.TemporaryDirectory(dir='.')
+        # ensure the temporary directory gets deleted even if the subprocess intercepts signals
+        atexit.register(td.cleanup)
+        output_dir = Path(td.name)
+        config_path = self.setup_mkdocs(output_dir)
+        addr = f'{host}:{port}'
+        cmd = ['mkdocs', 'serve', '-f', str(config_path), '--dev-addr', addr]
+        if not no_browser:
+            cmd.append('--open')
+        self._run_command(cmd)
