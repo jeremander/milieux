@@ -136,5 +136,9 @@ disable_error_code = ["attr-defined", "no-untyped-call", "no-untyped-def"]
 module = "milieux.cli.doc"
 disable_error_code = ["import-not-found", "method-assign"]
 
+[[tool.mypy.overrides]]
+module = "milieux.doc.hooks.*"
+disable_error_code = ["no-untyped-call", "no-untyped-def"]
+
 [tool.pytest.ini_options]
 addopts = "--verbose --durations=10 --cov=milieux --cov-config pyproject.toml"

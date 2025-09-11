@@ -2,6 +2,7 @@ import atexit
 from dataclasses import dataclass
 from operator import attrgetter
 from pathlib import Path
+import shutil
 from subprocess import CalledProcessError
 import tempfile
 from typing import Annotated, Any, Literal
@@ -21,6 +22,7 @@ MkdocsTheme = Literal['readthedocs', 'material']
 DEFAULT_DOC_CONFIG_TEMPLATE = Path(__file__).with_name('doc_template.yml.jinja')
 DEFAULT_DOC_HOME_TEMPLATE = Path(__file__).with_name('home_template.md.jinja')
 DEFAULT_EXTRA_CSS_TEMPLATE = Path(__file__).with_name('extra.css.jinja')
+LOCAL_HOOK_DIR = Path(__file__).with_name('hooks')
 DEFAULT_SITE_NAME = 'API Docs'
 DEFAULT_MKDOCS_THEME: MkdocsTheme = 'readthedocs'
 
@@ -90,17 +92,21 @@ class DocSetup:
     def setup_mkdocs(self, output_dir: Path) -> Path:
         """Sets up the directory in which to run mkdocs, writing mkdocs.yml (config file) and index.md (homepage).
         Returns the path to the config file."""
-        _ = ensure_dir(output_dir)
-        docs_dir = ensure_dir(output_dir / 'docs')
-        config_path = output_dir / 'mkdocs.yml'
-        logger.info(f'Writing {config_path}')
-        config_path.write_text(self.render_mkdocs_config())
-        index_path = docs_dir / 'index.md'
-        logger.info(f'Writing {index_path}')
-        index_path.write_text(self.render_mkdocs_index())
-        extra_css_path = docs_dir / 'extra.css'
-        logger.info(f'Writing {extra_css_path}')
-        extra_css_path.write_text(self.render_extra_css())
+        try:
+            _ = ensure_dir(output_dir)
+            docs_dir = ensure_dir(output_dir / 'docs')
+            config_path = output_dir / 'mkdocs.yml'
+            logger.info(f'Writing {config_path}')
+            config_path.write_text(self.render_mkdocs_config())
+            index_path = docs_dir / 'index.md'
+            logger.info(f'Writing {index_path}')
+            index_path.write_text(self.render_mkdocs_index())
+            extra_css_path = docs_dir / 'extra.css'
+            logger.info(f'Writing {extra_css_path}')
+            extra_css_path.write_text(self.render_extra_css())
+            shutil.copytree(LOCAL_HOOK_DIR, output_dir / LOCAL_HOOK_DIR.name, dirs_exist_ok=True)
+        except OSError as e:
+            raise DocBuildError(str(e)) from e
         return config_path
 
     def _run_command(self, cmd: list[str]) -> None:

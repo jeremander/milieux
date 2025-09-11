@@ -1,4 +1,5 @@
 site_name: {{SITE_NAME}}
+use_directory_urls: false
 
 extra_css:
   - extra.css
@@ -79,6 +80,11 @@ plugins:
     modules: {{PKG_PATHS}}
     # don't prepend modules with '[mod]' in navbar
     nav_item_prefix: ""
+
+{% if THEME == 'readthedocs' %}
+hooks:
+    - hooks/clean_search_html.py
+{% endif %}
 
 nav:
   - API Reference: reference

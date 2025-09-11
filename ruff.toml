@@ -68,6 +68,7 @@ line-length = 10000
 "milieux/cli/distro.py" = ["D102"]
 "milieux/cli/doc.py" = ["D102"]
 "milieux/cli/env.py" = ["D102", "D207"]
+"milieux/doc/hooks/*.py" = ["ANN"]
 "tests/*" = ["ANN", "D"]
 
 [lint.flake8-pytest-style]
