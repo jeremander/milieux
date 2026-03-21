@@ -9,3 +9,4 @@ site/
 dist/
 htmlcov
 .DS_Store
+.vscode

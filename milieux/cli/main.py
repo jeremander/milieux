@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from pathlib import Path
+import subprocess
 import sys
 import traceback
 from typing import Optional, Union
@@ -26,6 +27,10 @@ def _exit_with_error(msg: str) -> None:
 def _handle_error(exc: BaseException) -> None:
     if isinstance(exc, MilieuxError):  # expected error: just show the message
         msg = str(exc)
+    elif isinstance(exc, subprocess.CalledProcessError):  # show subprocess stderr
+        msg = str(exc)
+        if isinstance(exc.stderr, str):
+            msg += f'\n{exc.stderr}'
     elif isinstance(exc, (EOFError, KeyboardInterrupt)):  # interrupted user input
         msg = ''
     elif isinstance(exc, SystemExit):
