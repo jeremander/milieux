@@ -1,5 +1,5 @@
 import atexit
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from operator import attrgetter
 from pathlib import Path
 import shutil
@@ -41,14 +41,42 @@ def render_template(template: Path, **template_vars: Any) -> str:
 @dataclass
 class DocSetup:
     """Class for building API reference documentation."""
-    site_name: Annotated[str, Doc('Name of top-level documentation page')]
-    requirements: Annotated[list[Requirement], Doc('List of requirements specifying the packages to include in docs')]
-    theme: Annotated[MkdocsTheme, Doc('Name of mkdocs theme to use')] = DEFAULT_MKDOCS_THEME
-    config_template: Annotated[Path, Doc('jinja template for mkdocs.yml')] = DEFAULT_DOC_CONFIG_TEMPLATE
-    home_template: Annotated[Path, Doc('jinja template for index.md')] = DEFAULT_DOC_HOME_TEMPLATE
-    extra_css_template: Annotated[Path, Doc('jinja template for extra.css')] = DEFAULT_EXTRA_CSS_TEMPLATE
-    verbose: Annotated[bool, Doc('be verbose')] = False
-    allow_missing: Annotated[bool, Doc("warn (don't error) on missing packages")] = False
+    site_name: Annotated[
+        str,
+        Doc('Name of top-level documentation page'),
+    ]
+    requirements: Annotated[
+        list[Requirement],
+        Doc('List of requirements specifying the packages to include in docs'),
+    ]
+    theme: Annotated[
+        MkdocsTheme,
+        Doc('Name of mkdocs theme to use'),
+    ] = DEFAULT_MKDOCS_THEME
+    config_template: Annotated[
+        Path,
+        Doc('jinja template for mkdocs.yml'),
+    ] = DEFAULT_DOC_CONFIG_TEMPLATE
+    home_template: Annotated[
+        Path,
+        Doc('jinja template for index.md'),
+    ] = DEFAULT_DOC_HOME_TEMPLATE
+    extra_css_template: Annotated[
+        Path,
+        Doc('jinja template for extra.css'),
+    ] = DEFAULT_EXTRA_CSS_TEMPLATE
+    extra_template_vars: Annotated[
+        dict[str, str],
+        Doc('extra template variables for jinja rendering'),
+    ] = field(default_factory=dict)
+    verbose: Annotated[
+        bool,
+        Doc('be verbose'),
+    ] = False
+    allow_missing: Annotated[
+        bool,
+        Doc("warn (don't error) on missing packages"),
+    ] = False
 
     def __post_init__(self) -> None:
         # resolve package names to absolute paths
@@ -75,6 +103,8 @@ class DocSetup:
             'THEME': self.theme,
             'PKG_PATHS': [str(path) for path in self._package_paths],
             'DEFAULT_SITE_NAME': DEFAULT_SITE_NAME,
+            # include any extra user-provided variables
+            **self.extra_template_vars,
         }
 
     def render_mkdocs_config(self) -> str:

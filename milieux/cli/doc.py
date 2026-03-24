@@ -8,6 +8,7 @@ from fancy_dataclass import ArgparseDataclass, CLIDataclass
 from milieux import logger
 from milieux.distro import get_requirements
 from milieux.doc import DEFAULT_DOC_CONFIG_TEMPLATE, DEFAULT_DOC_HOME_TEMPLATE, DEFAULT_EXTRA_CSS_TEMPLATE, DEFAULT_MKDOCS_THEME, DEFAULT_SITE_NAME, DocSetup, MkdocsTheme
+from milieux.errors import UserInputError
 from milieux.package import Requirement
 
 
@@ -48,31 +49,59 @@ class PkgArgs(ArgparseDataclass):
 
 
 @dataclass
+class SiteConfigArgs(ArgparseDataclass):
+    """Templates, themes, and variables for site configuration."""
+    site_name: Optional[str] = field(
+        default=None,
+        metadata={'help': 'name of top-level site'},
+    )
+    theme: MkdocsTheme = field(
+        default=DEFAULT_MKDOCS_THEME,
+        metadata={'help': 'name of mkdocs theme', 'default_help': True},
+    )
+    config_template: Optional[Path] = field(
+        default=None,
+        metadata={'help': 'jinja template for mkdocs.yml'},
+    )
+    home_template: Optional[Path] = field(
+        default=None,
+        metadata={'help': 'jinja template for index.md'},
+    )
+    extra_css_template: Optional[Path] = field(
+        default=None,
+        metadata={'help': 'jinja template for extra.css'},
+    )
+    extra_template_vars: Optional[list[str]] = field(
+        default=None,
+        metadata={
+            'nargs': '+',
+            'metavar': 'VARIABLE:VALUE',
+            'help': 'one or more VARIABLE:VALUE pairs to be passed into jinja template renderer',
+        },
+    )
+
+    def __post_init__(self) -> None:
+        # validate VARIABLE:VALUE pairs
+        extra_template_vars = {}
+        for var_val_str in (self.extra_template_vars or []):
+            pair = var_val_str.split(':', maxsplit=1)
+            if len(pair) != 2:
+                raise UserInputError(f'invalid VARIABLE:VALUE pair: {var_val_str}')
+            (var, val) = pair
+            extra_template_vars[var] = val
+        self._extra_template_vars = extra_template_vars
+
+
+@dataclass
 class _DocBuild:
     """Base class for building API documentation using mkdocs."""
     pkg_args: PkgArgs = field(
         default_factory=PkgArgs,
-        metadata={'group': 'package arguments'}
+        metadata={'group': 'package arguments'},
     )
-    site_name: Optional[str] = field(
-        default=None,
-        metadata={'help': 'name of top-level site'}
-    )
-    theme: MkdocsTheme = field(
-        default=DEFAULT_MKDOCS_THEME,
-        metadata={'help': 'name of mkdocs theme', 'default_help': True}
-    )
-    config_template: Optional[Path] = field(
-        default=None,
-        metadata={'help': 'jinja template for mkdocs.yml'}
-    )
-    home_template: Optional[Path] = field(
-        default=None,
-        metadata={'help': 'jinja template for index.md'}
-    )
-    extra_css_template: Optional[Path] = field(
-        default=None,
-        metadata={'help': 'jinja template for extra.css'}
+    site_config_args: SiteConfigArgs = field(
+        default_factory=SiteConfigArgs,
+        metadata={'group': 'site configuration arguments'},
     )
     verbose: bool = field(
         default=False,
@@ -87,7 +116,7 @@ class _DocBuild:
     )
 
     def __post_init__(self) -> None:
-        self._site_name = self.site_name
+        self._site_name = self.site_config_args.site_name
         if self._site_name is None:  # assign a reasonable default site name
             self._site_name = self.pkg_args.default_site_name
         if self._site_name is None:
@@ -97,13 +126,15 @@ class _DocBuild:
     def doc_setup(self) -> DocSetup:
         """Gets a DocSetup object for building a mkdocs site."""
         assert self._site_name is not None
+        cfg = self.site_config_args
         return DocSetup(
             site_name=self._site_name,
             requirements=self.pkg_args.all_requirements,
-            theme=self.theme,
-            config_template=self.config_template or DEFAULT_DOC_CONFIG_TEMPLATE,
-            home_template=self.home_template or DEFAULT_DOC_HOME_TEMPLATE,
-            extra_css_template=self.extra_css_template or DEFAULT_EXTRA_CSS_TEMPLATE,
+            theme=cfg.theme,
+            config_template=cfg.config_template or DEFAULT_DOC_CONFIG_TEMPLATE,
+            home_template=cfg.home_template or DEFAULT_DOC_HOME_TEMPLATE,
+            extra_css_template=cfg.extra_css_template or DEFAULT_EXTRA_CSS_TEMPLATE,
+            extra_template_vars=cfg._extra_template_vars,
             verbose=self.verbose,
             allow_missing=self.allow_missing,
         )
@@ -115,7 +146,7 @@ class DocBuild(CLIDataclass, _DocBuild, command_name='build'):
     output_dir: Path = field(
         metadata={
             'args': ['-o', '--output-dir'],
-            'help': 'save output documentation to this directory'
+            'help': 'save output documentation to this directory',
         }
     )
 
@@ -132,15 +163,15 @@ class DocServe(CLIDataclass, _DocBuild, command_name='serve'):
     """Serve API documentation."""
     host: str = field(
         default='localhost',
-        metadata={'help': 'host on which to run HTTP server', 'default_help': True}
+        metadata={'help': 'host on which to run HTTP server', 'default_help': True},
     )
     port: int = field(
         default=8080,
-        metadata={'help': 'port on which to run HTTP server', 'default_help': True}
+        metadata={'help': 'port on which to run HTTP server', 'default_help': True},
     )
     no_browser: bool = field(
         default=False,
-        metadata={'help': 'do not open a browser after web server has started'}
+        metadata={'help': 'do not open a browser after web server has started'},
     )
 
     def run(self) -> None:
